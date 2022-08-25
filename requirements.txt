@@ -1,3 +1,4 @@
 Flask==2.2.2
 waitress==2.1.2
-opencv-python==4.6.0.66gu
+opencv-python==4.6.0.66
+pyOpenSSL==22.0.0

@@ -3,9 +3,12 @@ import cv2
 import logging
 import subprocess
 import re
+from flask_bootstrap import Bootstrap5
 
 #instatiate flask app  
 app = Flask(__name__, template_folder='./templates')
+
+bootstrap = Bootstrap5(app)
 
 #metodo para resgatar os ips das cameras de seguranca. (deve-se ser consultado do banco)
 addresses = subprocess.check_output(['arp', '-a'])
@@ -56,4 +59,4 @@ def video_feed(ip):
     return Response(stream_with_context(gen_frames(ip)), mimetype='multipart/x-mixed-replace; boundary=frame')
         
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
