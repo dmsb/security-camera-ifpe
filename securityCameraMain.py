@@ -79,6 +79,7 @@ def gen_frames(ip):
 
 @app.route('/')
 def index():
+    return render_template('login.html')
     return render_template('indexOnDemandLoad.html', len = len(cameraIps), cameraIps = cameraIps)
 
 @app.route('/video_feed/<string:ip>')
