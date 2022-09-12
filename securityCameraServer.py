@@ -6,11 +6,27 @@ import subprocess
 import re
 from flask_bootstrap import Bootstrap5
 import math
-
 from mongoMapper import Camera, User
+import string
+import secrets
+from flask import session
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
+#instatiate flask app
+
+#Set the secret key to some random bytes
+alphabet = string.ascii_letters + string.digits
+
+while True:
+    password = ''.join(secrets.choice(alphabet) for i in range(10))
+    if (any(c.islower() for c in password)
+            and any(c.isupper() for c in password)
+            and sum(c.isdigit() for c in password) >= 3):
+        break
+
+app.secret_key = password
+#Set the secret key to some random bytes
 
 #configurando bootstrap
 bootstrap = Bootstrap5(app)
@@ -94,6 +110,8 @@ def index():
 
 @app.get('/login')
 def login_get():
+    if 'username' in session :
+        return redirect(url_for('cameras'))
     return render_template('login.html')
 
 @app.post('/login')
@@ -102,17 +120,26 @@ def login_post():
     password = request.form['password']
     connected_user = User.objects(username=username, password=password).first()
     if connected_user :
+        session['username'] = request.form['username']
         return redirect(url_for('cameras'))
-    else :
-        return redirect(url_for('login_get'))
+    return redirect(url_for('login_get'))
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return render_template('login.html')
 
 @app.get('/cameras')
 def cameras():
-    return render_template('indexOnDemandLoad.html', len = len(cameraIps), cameraIps = cameraIps)
+    if 'username' in session :
+        return render_template('indexOnDemandLoad.html', len = len(cameraIps), cameraIps = cameraIps)
+    return redirect(url_for('login_get'))
 
 @app.route('/video_feed/<string:ip>')
 def video_feed(ip):
-    return Response(stream_with_context(gen_frames(ip)), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if 'username' in session:
+        return Response(stream_with_context(gen_frames(ip)), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return redirect(url_for('login_get'))
         
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
