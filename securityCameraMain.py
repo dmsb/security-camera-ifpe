@@ -1,25 +1,52 @@
+from flask_pymongo import PyMongo
 from flask import Flask, Response, render_template, stream_with_context
 import cv2
 import logging
 import subprocess
 import re
 from flask_bootstrap import Bootstrap5
+import math
 
-#instatiate flask app  
+#instatiate flask app
 app = Flask(__name__, template_folder='./templates')
 
+#configurando bootstrap
 bootstrap = Bootstrap5(app)
+#configurando bootstrap
 
-#metodo para resgatar os ips das cameras de seguranca. (deve-se ser consultado do banco)
+#configurando flask_pymongo
+app.config["MONGO_URI"] = "mongodb://localhost:27017/security-camera"
+mongo = PyMongo(app)
+#configurando flask_pymongo
+
+
+#resgatando todas as cameras do mongo
+cameras = mongo.db.camera.find()
+#resgatando todas as cameras do mongo
+
+#resgatando todos o mapa de ips/mac address identificados na rede local
 addresses = subprocess.check_output(['arp', '-a'])
+#resgatando todos o mapa de ips/mac address identificados na rede local
 
+#transformando o retorno dos ips numa estrutura facilmente iteravel
 networkAdds = addresses.decode('windows-1252').splitlines()
-cameraIps = ['0']
-for networkMapItem in networkAdds :
-    if len(networkMapItem) > 0 and networkMapItem.split()[1] == '60-23-a4-b4-1b-8f':
-        cameraIps.append(networkMapItem.split()[0])
+#transformando o retorno dos ips numa estrutura facilmente iteravel
 
-def gen_frames(ip):  # generate frame by frame from camera
+#salvando na variavel global os ips das cameras para conexao
+cameraIps = ['0']
+for camera in cameras:
+    for networkMapItem in networkAdds :
+        if len(networkMapItem) > 0 and networkMapItem.split()[1] == ''.join(camera['macAddress']):
+            cameraIps.append(networkMapItem.split()[0])
+            break
+#salvando na variavel global os ips das cameras para conexao
+
+matrix = math.sqrt(17)
+print(matrix)
+print(math.ceil(matrix))
+
+# generate frame by frame from camera
+def gen_frames(ip): 
 
     ipRegexCheckResult = re.search("^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$", ip)
     
