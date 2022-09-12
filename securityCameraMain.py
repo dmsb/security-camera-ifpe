@@ -1,4 +1,4 @@
-from flask_pymongo import PyMongo
+from flask_mongoengine import MongoEngine
 from flask import Flask, Response, render_template, stream_with_context
 import cv2
 import logging
@@ -7,6 +7,8 @@ import re
 from flask_bootstrap import Bootstrap5
 import math
 
+from mongoMapper import Camera
+
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
 
@@ -14,14 +16,24 @@ app = Flask(__name__, template_folder='./templates')
 bootstrap = Bootstrap5(app)
 #configurando bootstrap
 
-#configurando flask_pymongo
-app.config["MONGO_URI"] = "mongodb://localhost:27017/security-camera"
-mongo = PyMongo(app)
-#configurando flask_pymongo
+#configurando mongo
+db = MongoEngine()
+app.config["MONGODB_SETTINGS"] = [
+    {
+        "db": "security-camera",
+        "host": "mongodb://localhost/security-camera",
+        "port": 27017,
+        "username": "admin-ifpe",
+        "password": "admin-ifpe",
+        "alias": "default"
+    }
+]
+db.init_app(app)
+#configurando mongo
 
 
 #resgatando todas as cameras do mongo
-cameras = mongo.db.camera.find()
+cameras = Camera.objects().all()
 #resgatando todas as cameras do mongo
 
 #resgatando todos o mapa de ips/mac address identificados na rede local
@@ -36,7 +48,7 @@ networkAdds = addresses.decode('windows-1252').splitlines()
 cameraIps = ['0']
 for camera in cameras:
     for networkMapItem in networkAdds :
-        if len(networkMapItem) > 0 and networkMapItem.split()[1] == ''.join(camera['macAddress']):
+        if len(networkMapItem) > 0 and networkMapItem.split()[1] == camera.macAddress :
             cameraIps.append(networkMapItem.split()[0])
             break
 #salvando na variavel global os ips das cameras para conexao

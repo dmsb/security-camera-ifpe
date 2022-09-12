@@ -3,4 +3,4 @@ waitress==2.1.2
 pyOpenSSL==22.0.0
 opencv-python==4.6.0.66
 Bootstrap-Flask==2.1.0
-Flask-PyMongo==2.3.0
+flask-mongoengine==1.0.0
