@@ -1,5 +1,5 @@
 from flask_mongoengine import MongoEngine
-from flask import Flask, Response, render_template, stream_with_context
+from flask import Flask, request, Response, render_template, stream_with_context, redirect, url_for
 import cv2
 import logging
 import subprocess
@@ -7,7 +7,7 @@ import re
 from flask_bootstrap import Bootstrap5
 import math
 
-from mongoMapper import Camera
+from mongoMapper import Camera, User
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -30,7 +30,6 @@ app.config["MONGODB_SETTINGS"] = [
 ]
 db.init_app(app)
 #configurando mongo
-
 
 #resgatando todas as cameras do mongo
 cameras = Camera.objects().all()
@@ -91,7 +90,24 @@ def gen_frames(ip):
 
 @app.route('/')
 def index():
+    return redirect(url_for('login_get'))
+
+@app.get('/login')
+def login_get():
     return render_template('login.html')
+
+@app.post('/login')
+def login_post():
+    username = request.form['username']
+    password = request.form['password']
+    connected_user = User.objects(username=username, password=password).first()
+    if connected_user :
+        return redirect(url_for('cameras'))
+    else :
+        return redirect(url_for('login_get'))
+
+@app.get('/cameras')
+def cameras():
     return render_template('indexOnDemandLoad.html', len = len(cameraIps), cameraIps = cameraIps)
 
 @app.route('/video_feed/<string:ip>')

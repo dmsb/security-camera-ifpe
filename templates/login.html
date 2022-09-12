@@ -17,9 +17,9 @@
               </div>
           
               <!-- Login Form -->
-              <form>
-                <input type="text" id="login" class="fadeIn second" name="login" placeholder="login">
-                <input type="password" id="password" class="fadeIn third" name="login" placeholder="password">
+              <form action="{{ url_for('login_post') }}" method="post">
+                <input type="text" id="login_username" class="fadeIn second" name="username" placeholder="login">
+                <input type="password" id="login_password" class="fadeIn third" name="password" placeholder="password">
                 <input type="submit" class="fadeIn fourth" value="Entrar">
               </form>
           
