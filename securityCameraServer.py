@@ -10,6 +10,7 @@ from mongoMapper import Camera, User
 import string
 import secrets
 from flask import session
+import numpy as np
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -68,10 +69,6 @@ for camera in cameras:
             break
 #salvando na variavel global os ips das cameras para conexao
 
-matrix = math.sqrt(17)
-print(matrix)
-print(math.ceil(matrix))
-
 # generate frame by frame from camera
 def gen_frames(ip): 
 
@@ -104,6 +101,9 @@ def gen_frames(ip):
         else:
             pass
 
+def convert_1d_to_2d(l, cols):
+    return [l[i:i + cols] for i in range(0, len(l), cols)]
+
 @app.route('/')
 def index():
     return redirect(url_for('login_get'))
@@ -132,7 +132,13 @@ def logout():
 @app.get('/cameras')
 def cameras():
     if 'username' in session :
-        return render_template('indexOnDemandLoad.html', len = len(cameraIps), cameraIps = cameraIps)
+        
+        cameras_quantity = len(cameraIps)
+        camera_matrix_size = math.ceil(math.sqrt(cameras_quantity))
+        # cameras_matrix = convert_1d_to_2d(cameraIps, camera_matrix_size)
+        cameras_matrix = convert_1d_to_2d(np.arange(17), 5)
+
+        return render_template('cameras.html', cameras_matrix = cameras_matrix, cameraIps = cameraIps)
     return redirect(url_for('login_get'))
 
 @app.route('/video_feed/<string:ip>')
@@ -140,6 +146,6 @@ def video_feed(ip):
     if 'username' in session:
         return Response(stream_with_context(gen_frames(ip)), mimetype='multipart/x-mixed-replace; boundary=frame')
     return redirect(url_for('login_get'))
-        
+         
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

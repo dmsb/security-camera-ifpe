@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+    {{ super() }}
+    <div class="container">
+        {% if cameras_matrix %}
+            {% for i in range(0, cameras_matrix|length) %}
+            <div class="row">
+                {% for j in range(0, cameras_matrix[i]|length) %}
+                <div class="col">
+                    <img src="{{ url_for('video_feed', ip=cameraIps[j]) }}" height="80%">          
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+{% endblock %}
