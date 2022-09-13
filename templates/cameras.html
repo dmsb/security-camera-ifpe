@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+{% block styles %}
+{{super()}}
+<link rel="stylesheet"
+      href="{{url_for('static', filename='css/cameras.css')}}">
+{% endblock %}
 {% block content %}
     {{ super() }}
     <div class="container">
@@ -7,7 +12,7 @@
             <div class="row">
                 {% for j in range(0, cameras_matrix[i]|length) %}
                 <div class="col">
-                    <img src="{{ url_for('video_feed', ip=cameraIps[j]) }}" height="80%">          
+                    <img src="{{ url_for('video_feed', ip=cameraIps[j]) }}" >          
                 </div>
                 {% endfor %}
             </div>

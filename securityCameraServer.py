@@ -84,15 +84,18 @@ def gen_frames(ip):
     
     cap = cv2.VideoCapture(rtspConnetion)
 
+    cameras_quantity = len(cameraIps)
+    camera_matrix_size = math.ceil(math.sqrt(cameras_quantity))
+
     while True:
         success, frame = cap.read()
         if success:
             try:
-                #ret, buffer = cv2.imencode('.jpg', cv2.flip(frame,1))
-                ret, buffer = cv2.imencode('.jpg', frame)
-                frame = buffer.tobytes()
+                resized_frame = resize_img_from_matriz_size(camera_matrix_size, frame)
+                ret, buffer = cv2.imencode('.jpg', resized_frame)
+                resized_frame = buffer.tobytes()
                 yield (b'--frame\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                    b'Content-Type: image/jpeg\r\n\r\n' + resized_frame + b'\r\n')
             except Exception as e:
                 logging.exception(e)
                 print(e)
@@ -100,6 +103,12 @@ def gen_frames(ip):
         else:
             pass
 
+def resize_img_from_matriz_size(camera_matrix_size, frame):
+    width = int(frame.shape[1] / camera_matrix_size)
+    height = int(frame.shape[0] / camera_matrix_size)
+    dim = (width, height)
+    return cv2.resize(frame, dim, interpolation = cv2.INTER_AREA)
+    
 def convert_1d_to_2d(l, cols):
     return [l[i:i + cols] for i in range(0, len(l), cols)]
 

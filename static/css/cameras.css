@@ -1,0 +1,7 @@
+.col {
+  border-width: 0.1rem;
+  border-style: solid;
+  border-color: white;
+  background-color: gray;
+  text-align: center;
+}
