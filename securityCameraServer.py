@@ -10,7 +10,6 @@ from mongoMapper import Camera, User
 import string
 import secrets
 from flask import session
-import numpy as np
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -135,8 +134,7 @@ def cameras():
         
         cameras_quantity = len(cameraIps)
         camera_matrix_size = math.ceil(math.sqrt(cameras_quantity))
-        # cameras_matrix = convert_1d_to_2d(cameraIps, camera_matrix_size)
-        cameras_matrix = convert_1d_to_2d(np.arange(17), 5)
+        cameras_matrix = convert_1d_to_2d(cameraIps, camera_matrix_size)
 
         return render_template('cameras.html', cameras_matrix = cameras_matrix, cameraIps = cameraIps)
     return redirect(url_for('login_get'))
