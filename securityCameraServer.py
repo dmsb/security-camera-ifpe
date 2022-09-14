@@ -47,26 +47,29 @@ app.config["MONGODB_SETTINGS"] = [
 db.init_app(app)
 #configurando mongo
 
-#resgatando todas as cameras do mongo
-cameras = Camera.objects().all()
-#resgatando todas as cameras do mongo
-
-#resgatando todos o mapa de ips/mac address identificados na rede local
-addresses = subprocess.check_output(['arp', '-a'])
-#resgatando todos o mapa de ips/mac address identificados na rede local
-
-#transformando o retorno dos ips numa estrutura facilmente iteravel
-network_adds = addresses.decode('windows-1252').splitlines()
-#transformando o retorno dos ips numa estrutura facilmente iteravel
-
-#salvando na variavel global os ips das cameras para conexao
 camera_ips = ['0']
-for camera in cameras:
-    for networkMapItem in network_adds :
-        if len(networkMapItem) > 0 and networkMapItem.split()[1] == camera.mac_address :
-            camera_ips.append((networkMapItem.split()[0], camera))
-            break
-#salvando na variavel global os ips das cameras para conexao
+
+def load_cameras():
+    #resgatando todas as cameras do mongo
+    cameras = Camera.objects().all()
+    #resgatando todas as cameras do mongo
+
+    #resgatando todos o mapa de ips/mac address identificados na rede local
+    addresses = subprocess.check_output(['arp', '-a'])
+    #resgatando todos o mapa de ips/mac address identificados na rede local
+
+    #transformando o retorno dos ips numa estrutura facilmente iteravel
+    network_adds = addresses.decode('windows-1252').splitlines()
+    #transformando o retorno dos ips numa estrutura facilmente iteravel
+
+    #salvando na variavel global os ips das cameras para conexao
+    for camera in cameras:
+        for network_map_item in network_adds :
+            if len(network_map_item) > 0 and network_map_item.split()[1] == camera.mac_address :
+                camera_ips.append((network_map_item.split()[0], camera))
+                break
+    #salvando na variavel global os ips das cameras para conexao
+    return camera_ips
 
 # generate frame by frame from camera
 def gen_frames(ip): 
@@ -84,14 +87,11 @@ def gen_frames(ip):
     
     cap = cv2.VideoCapture(rtsp_connetion)
 
-    cameras_quantity = len(camera_ips)
-    camera_matrix_size = math.ceil(math.sqrt(cameras_quantity))
-
     while True:
         success, frame = cap.read()
         if success:
             try:
-                resized_frame = resize_img_from_matriz_size(camera_matrix_size, frame)
+                resized_frame = resize_img_from_matriz_size(get_cameras_matrix_size(), frame)
                 ret, buffer = cv2.imencode('.jpg', resized_frame)
                 resized_frame = buffer.tobytes()
                 yield (b'--frame\r\n'
@@ -111,6 +111,10 @@ def resize_img_from_matriz_size(camera_matrix_size, frame):
     
 def convert_1d_to_2d(l, cols):
     return [l[i:i + cols] for i in range(0, len(l), cols)]
+
+def get_cameras_matrix_size():
+    cameras_quantity = len(camera_ips)
+    return math.ceil(math.sqrt(cameras_quantity))
 
 @app.route('/')
 def index():
@@ -140,11 +144,8 @@ def logout():
 @app.get('/cameras')
 def cameras():
     if 'username' in session :
-        
-        cameras_quantity = len(camera_ips)
-        camera_matrix_size = math.ceil(math.sqrt(cameras_quantity))
-        cameras_matrix = convert_1d_to_2d(camera_ips, camera_matrix_size)
-
+        load_cameras()
+        cameras_matrix = convert_1d_to_2d(camera_ips, get_cameras_matrix_size())
         return render_template('cameras.html', cameras_matrix = cameras_matrix, camera_ips = camera_ips)
     return redirect(url_for('login_get'))
 
