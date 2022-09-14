@@ -11,6 +11,7 @@ import string
 import secrets
 from flask import session
 import time
+from threading import Thread
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -115,7 +116,14 @@ def get_frames_to_store(cap, mac_address):
                 break    
         else:
             break
-    
+
+def store_cameras():
+    for camera_to_store in load_cameras():
+        gen_frames(camera_to_store[0], camera_to_store[1].mac_address, 'store')
+
+new_thread_to_save_videos_in_background = Thread(target=store_cameras)
+new_thread_to_save_videos_in_background.start()
+
 def get_frames_to_view(cap):
     while True:
         success, frame = cap.read()
@@ -144,11 +152,6 @@ def convert_1d_to_2d(l, cols):
 def get_cameras_matrix_size():
     cameras_quantity = len(camera_ips)
     return math.ceil(math.sqrt(cameras_quantity))
-
-def store_cameras():
-    for camera_to_store in load_cameras():
-        gen_frames(camera_to_store[0], camera_to_store[1].mac_address, 'store')
-store_cameras()
 
 @app.route('/')
 def index():
@@ -193,6 +196,6 @@ def video_feed(ip):
     if 'username' in session:
         return Response(stream_with_context(gen_frames(ip,'view')), mimetype='multipart/x-mixed-replace; boundary=frame')
     return redirect(url_for('login_get'))
-         
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', threaded=True)
