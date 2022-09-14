@@ -1,4 +1,8 @@
-.col {
+body {
+  background-color: RGBA(33,47,31,var(--bs-bg-opacity,1));
+}
+
+.col.camera-view {
   border-width: 0.1rem;
   border-style: solid;
   border-color: white;
@@ -6,6 +10,16 @@
   text-align: center;
 }
 
-.bg-dark {
-  background-color: RGBA(33,77,41,var(--bs-bg-opacity,1))
+.bg-header-container {
+  background-color: RGBA(33,77,41,var(--bs-bg-opacity,1));
+}
+
+
+
+.list-group-item {
+  padding: 0.3rem; 
+}
+
+.logout-btn {
+  padding: 15px 0px 0px;
 }

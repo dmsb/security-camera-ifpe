@@ -8,9 +8,10 @@ class User(me.Document):
 
 class Camera(me.Document):
     _id: me.ObjectIdField()
-    macAddress = me.StringField(required=True)
+    mac_address = me.StringField(required=True)
     department = me.StringField()
     location = me.StringField()
-    specificLocation = me.StringField()
+    specific_location = me.StringField()
     brand = me.StringField()
     model = me.StringField()
+    is_enabled = me.BooleanField()

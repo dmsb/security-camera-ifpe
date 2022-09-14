@@ -56,35 +56,35 @@ addresses = subprocess.check_output(['arp', '-a'])
 #resgatando todos o mapa de ips/mac address identificados na rede local
 
 #transformando o retorno dos ips numa estrutura facilmente iteravel
-networkAdds = addresses.decode('windows-1252').splitlines()
+network_adds = addresses.decode('windows-1252').splitlines()
 #transformando o retorno dos ips numa estrutura facilmente iteravel
 
 #salvando na variavel global os ips das cameras para conexao
-cameraIps = ['0']
+camera_ips = ['0']
 for camera in cameras:
-    for networkMapItem in networkAdds :
-        if len(networkMapItem) > 0 and networkMapItem.split()[1] == camera.macAddress :
-            cameraIps.append(networkMapItem.split()[0])
+    for networkMapItem in network_adds :
+        if len(networkMapItem) > 0 and networkMapItem.split()[1] == camera.mac_address :
+            camera_ips.append((networkMapItem.split()[0], camera))
             break
 #salvando na variavel global os ips das cameras para conexao
 
 # generate frame by frame from camera
 def gen_frames(ip): 
 
-    ipRegexCheckResult = re.search("^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$", ip)
+    ip_regex_check_result = re.search("^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$", ip)
     
-    print(ipRegexCheckResult)
+    print(ip_regex_check_result)
     
-    if ipRegexCheckResult:
-        rtspConnetion = 'rtsp://admin:NUHIDF@'+ip+':554/H.264'
+    if ip_regex_check_result:
+        rtsp_connetion = 'rtsp://admin:NUHIDF@'+ip+':554/H.264'
     else:
-        rtspConnetion = int(ip)
+        rtsp_connetion = int(ip)
     
-    print(rtspConnetion)
+    print(rtsp_connetion)
     
-    cap = cv2.VideoCapture(rtspConnetion)
+    cap = cv2.VideoCapture(rtsp_connetion)
 
-    cameras_quantity = len(cameraIps)
+    cameras_quantity = len(camera_ips)
     camera_matrix_size = math.ceil(math.sqrt(cameras_quantity))
 
     while True:
@@ -141,11 +141,11 @@ def logout():
 def cameras():
     if 'username' in session :
         
-        cameras_quantity = len(cameraIps)
+        cameras_quantity = len(camera_ips)
         camera_matrix_size = math.ceil(math.sqrt(cameras_quantity))
-        cameras_matrix = convert_1d_to_2d(cameraIps, camera_matrix_size)
+        cameras_matrix = convert_1d_to_2d(camera_ips, camera_matrix_size)
 
-        return render_template('cameras.html', cameras_matrix = cameras_matrix, cameraIps = cameraIps)
+        return render_template('cameras.html', cameras_matrix = cameras_matrix, camera_ips = camera_ips)
     return redirect(url_for('login_get'))
 
 @app.route('/video_feed/<string:ip>')
