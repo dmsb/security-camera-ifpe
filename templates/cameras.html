@@ -6,6 +6,20 @@
 {% endblock %}
 {% block content %}
     {{ super() }}
+    <header class="p-3 text-bg-dark">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                    <li class="nav-link px-7 text-white">IFPE - Security Cameras</li>
+                </ul>
+                <div class="text-end">
+                    <form action="{{ url_for('logout') }}">
+                        <input type="submit" class="btn btn-outline-light me-2" value="Sair" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </header>
     <div class="container">
         {% if cameras_matrix %}
             {% for i in range(0, cameras_matrix|length) %}

@@ -5,3 +5,7 @@
   background-color: gray;
   text-align: center;
 }
+
+.text-bg-dark {
+  background-color: RGBA(33,37,41,var(--bs-bg-opacity,1))!important
+}

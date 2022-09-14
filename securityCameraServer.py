@@ -135,7 +135,7 @@ def login_post():
 @app.route('/logout')
 def logout():
     session.pop('username', None)
-    return render_template('login.html')
+    return redirect(url_for('login_get'))
 
 @app.get('/cameras')
 def cameras():
