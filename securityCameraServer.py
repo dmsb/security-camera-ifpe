@@ -10,6 +10,7 @@ from mongoMapper import Camera, User
 import string
 import secrets
 from flask import session
+import time
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -47,7 +48,7 @@ app.config["MONGODB_SETTINGS"] = [
 db.init_app(app)
 #configurando mongo
 
-camera_ips = ['0']
+camera_ips = []
 
 def load_cameras():
     #resgatando todas as cameras do mongo
@@ -61,32 +62,61 @@ def load_cameras():
     #transformando o retorno dos ips numa estrutura facilmente iteravel
     network_adds = addresses.decode('windows-1252').splitlines()
     #transformando o retorno dos ips numa estrutura facilmente iteravel
-
+    cameras_map = []
     #salvando na variavel global os ips das cameras para conexao
     for camera in cameras:
-        for network_map_item in network_adds :
-            if len(network_map_item) > 0 and network_map_item.split()[1] == camera.mac_address :
-                camera_ips.append((network_map_item.split()[0], camera))
+        for network_map_item in network_adds:
+            if len(network_map_item) > 0 and network_map_item.split()[1] == camera.mac_address:
+                cameras_map.append((network_map_item.split()[0], camera))
                 break
     #salvando na variavel global os ips das cameras para conexao
-    return camera_ips
+    return cameras_map
+
+def gen_frames(ip, request_type):
+    gen_frames(ip, None, request_type)
 
 # generate frame by frame from camera
-def gen_frames(ip): 
+def gen_frames(ip, mac_address, request_type): 
 
     ip_regex_check_result = re.search("^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$", ip)
-    
-    print(ip_regex_check_result)
     
     if ip_regex_check_result:
         rtsp_connetion = 'rtsp://admin:NUHIDF@'+ip+':554/H.264'
     else:
         rtsp_connetion = int(ip)
     
-    print(rtsp_connetion)
-    
     cap = cv2.VideoCapture(rtsp_connetion)
+    if request_type == 'store':
+        get_frames_to_store(cap, mac_address)
+    else:
+        get_frames_to_view(cap)
 
+
+def get_frames_to_store(cap, mac_address):
+    
+    fourcc = cv2.VideoWriter_fourcc('X','V','I','D')
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    current_seconds = time.time()
+    out = cv2.VideoWriter(mac_address + '_' + str(current_seconds) + '.avi', fourcc, 20, (frame_width,frame_height), True)
+
+    while True:
+        success, frame = cap.read()
+        if success:
+            try:
+                if time.time() - current_seconds <= 15:
+                    out.write(frame)
+                else:
+                    out.release()
+                    get_frames_to_store(cap, mac_address)
+            except Exception as e:
+                logging.exception(e)
+                print(e)
+                break    
+        else:
+            break
+    
+def get_frames_to_view(cap):
     while True:
         success, frame = cap.read()
         if success:
@@ -101,8 +131,7 @@ def gen_frames(ip):
                 print(e)
                 pass    
         else:
-            pass
-
+                pass
 def resize_img_from_matriz_size(camera_matrix_size, frame):
     width = int(frame.shape[1] / camera_matrix_size)
     height = int(frame.shape[0] / camera_matrix_size)
@@ -115,6 +144,11 @@ def convert_1d_to_2d(l, cols):
 def get_cameras_matrix_size():
     cameras_quantity = len(camera_ips)
     return math.ceil(math.sqrt(cameras_quantity))
+
+def store_cameras():
+    for camera_to_store in load_cameras():
+        gen_frames(camera_to_store[0], camera_to_store[1].mac_address, 'store')
+store_cameras()
 
 @app.route('/')
 def index():
@@ -144,7 +178,12 @@ def logout():
 @app.get('/cameras')
 def cameras():
     if 'username' in session :
-        load_cameras()
+        camera_ips = load_cameras()
+
+        #usando para testes
+        camera_ips.append('0')
+        #usando para testes
+        
         cameras_matrix = convert_1d_to_2d(camera_ips, get_cameras_matrix_size())
         return render_template('cameras.html', cameras_matrix = cameras_matrix, camera_ips = camera_ips)
     return redirect(url_for('login_get'))
@@ -152,7 +191,7 @@ def cameras():
 @app.route('/video_feed/<string:ip>')
 def video_feed(ip):
     if 'username' in session:
-        return Response(stream_with_context(gen_frames(ip)), mimetype='multipart/x-mixed-replace; boundary=frame')
+        return Response(stream_with_context(gen_frames(ip,'view')), mimetype='multipart/x-mixed-replace; boundary=frame')
     return redirect(url_for('login_get'))
          
 if __name__ == '__main__':
