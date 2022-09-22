@@ -11,6 +11,7 @@ import string
 import secrets
 import time
 from threading import Thread
+from emailSender import send_password_recovery_to_email
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -155,7 +156,7 @@ def store_cameras():
     new_thread_to_save_videos_in_background.start()
     #testando camera do notebook
 
-store_cameras()
+# store_cameras()
 # recording camera locally
 
 @app.route('/')
@@ -181,6 +182,17 @@ def login_post():
 @app.route('/logout')
 def logout():
     session.pop('username', None)
+    return redirect(url_for('login_get'))
+
+@app.get('/password_recovery_get')
+def password_recovery_get():
+    return render_template('passwordRecovery.html')
+
+@app.post('/password_recovery_post')
+def password_recovery_post():
+    email = request.form['email']
+    connected_user = User.objects(username=email).first()
+    send_password_recovery_to_email(email, connected_user.password)
     return redirect(url_for('login_get'))
 
 @app.get('/cameras')
