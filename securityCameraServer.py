@@ -118,7 +118,7 @@ def get_frames_to_store(cap, mac_address):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     current_seconds = time.time()
-    out = cv2.VideoWriter(mac_address + '_' + str(current_seconds) + '.avi', fourcc, 20, (frame_width, frame_height), True)
+    out = cv2.VideoWriter('video_storage/' + mac_address + '_' + str(current_seconds) + '.avi', fourcc, 20, (frame_width, frame_height), True)
 
     while True:
         success, frame = cap.read()
@@ -140,7 +140,6 @@ def store_cameras_thread(cameraTuple):
     cap = build_video_capture(cameraTuple[0])
     get_frames_to_store(cap, cameraTuple[1])
 
-
 def store_cameras():
     camera_ips = load_cameras()
     for camera in camera_ips:
@@ -151,12 +150,12 @@ def store_cameras():
         new_thread_to_save_videos_in_background.start()
     
     #testando camera do notebook
-    cameraTuple = ('0', 'mac_address')
-    new_thread_to_save_videos_in_background = Thread(target=store_cameras_thread, args=(cameraTuple,))
-    new_thread_to_save_videos_in_background.start()
+    # cameraTuple = ('0', 'mac_address')
+    # new_thread_to_save_videos_in_background = Thread(target=store_cameras_thread, args=(cameraTuple,))
+    # new_thread_to_save_videos_in_background.start()
     #testando camera do notebook
 
-# store_cameras()
+store_cameras()
 # recording camera locally
 
 @app.route('/')
