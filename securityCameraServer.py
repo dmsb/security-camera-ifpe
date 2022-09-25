@@ -1,3 +1,4 @@
+import json
 from flask_mongoengine import MongoEngine
 from flask import Flask, request, Response, render_template, stream_with_context, redirect, url_for, session
 import cv2
@@ -12,6 +13,12 @@ import secrets
 import time
 from threading import Thread
 from emailSender import send_password_recovery_to_email
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+import requests
+from google.auth.transport.requests import Request
+import os
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -48,6 +55,67 @@ app.config["MONGODB_SETTINGS"] = [
 ]
 db.init_app(app)
 #configurando mongo
+
+URL_GOOGLE_DRIVE = 'https://www.googleapis.com/upload/drive/v3/files'
+def read_in_chunks(file_object, CHUNK_SIZE):
+    while True:
+        data = file_object.read(CHUNK_SIZE)
+        if not data:
+            break
+        yield data
+
+def service_account_google(file_information):
+    content_folder = file_information[0];
+    content_name = file_information[1];
+
+    SCOPES = ['https://www.googleapis.com/auth/drive.file']
+    SERVICE_ACCOUNT_FILE = 'google-auth/google_service_account_private_key.json'
+
+    credentials = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+    creds = credentials.with_subject('security-camera-ifpe@security-camera-363502.iam.gserviceaccount.com')
+    request = Request()
+    creds.refresh(request)
+
+    video_location = content_folder + content_name;
+    content_size = os.stat(video_location).st_size 
+    print(content_name, video_location, content_size)
+
+    payload = {"name": content_name}
+    querystring = {"uploadType": "resumable", "mimeType": "video/x-msvideo"}
+    bearer_token = 'Bearer ' + creds.token
+    headers = {
+        'Content-Length': str(content_size),
+        'Content-Type': 'application/json',
+        'X-Upload-Content-Type': 'video/x-msvideo',
+        'Authorization': bearer_token
+    }
+    response = requests.post(URL_GOOGLE_DRIVE, 
+        data=json.dumps(payload, separators=(',', ':')), 
+        headers=headers, 
+        params=json.dumps(querystring, separators=(',', ':')))
+    
+    # upload_id = response.headers['X-GUploader-UploadID']
+    upload_id = json.loads(response.content)['id']
+
+    file_object = open(video_location, "rb")
+    index = 0
+    offset = 0
+    headers = {}
+  
+    for chunk in read_in_chunks(file_object, 262144):
+        offset = index + len(chunk)
+        headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
+        headers['Authorization'] = bearer_token
+        headers['uploadType'] = 'resumable'
+        index = offset 
+        try: 
+            data = {"data": chunk, "mimeType": "video/x-msvideo"}
+            r = requests.patch(URL_GOOGLE_DRIVE + '/' + upload_id, data=data, headers=headers)
+            print(r.content)
+            print("r: %s, Content-Range: %s" % (r, headers['Content-Range'])) 
+        except Exception as e:
+            print(e)
 
 def load_cameras():
     #resgatando todas as cameras do mongo
@@ -118,16 +186,21 @@ def get_frames_to_store(cap, mac_address):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     current_seconds = time.time()
-    out = cv2.VideoWriter('video_storage/' + mac_address + '_' + str(current_seconds) + '.avi', fourcc, 20, (frame_width, frame_height), True)
+    file_location = 'video_storage/'
+    file_name = mac_address + '_' + str(current_seconds) + '.avi'
+    out = cv2.VideoWriter(file_location + file_name, fourcc, 20, (frame_width, frame_height), True)
 
     while True:
         success, frame = cap.read()
         if success:
             try:
-                if time.time() - current_seconds <= 15:
+                if time.time() - current_seconds <= 10:
                     out.write(frame)
                 else:
                     out.release()
+                    service_acc_parameters = (file_location, file_name)
+                    thread_to_upload_saved_video = Thread(target=service_account_google, args=(service_acc_parameters,))
+                    thread_to_upload_saved_video.start()
                     get_frames_to_store(cap, mac_address)
             except Exception as e:
                 logging.exception(e)
