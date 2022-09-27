@@ -3,5 +3,6 @@ __pycache__
 certificate
 nginx.conf
 *.avi
-serverEmailData.py
+securityCameraSecrets.py
 google-auth
+video_storage

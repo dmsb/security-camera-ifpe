@@ -1,6 +1,6 @@
 import smtplib
 from email.message import EmailMessage
-from serverEmailData import SERVER_EMAIL_ADDRESS, SERVER_EMAIL_PASSWORD
+from securityCameraSecrets import SERVER_EMAIL_ADDRESS, SERVER_EMAIL_PASSWORD
 
 def send_password_recovery_to_email(user_email, current_password):
     msg = EmailMessage()

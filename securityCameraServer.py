@@ -20,6 +20,8 @@ import requests
 from google.auth.transport.requests import Request
 import os
 
+from securityCameraSecrets import GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID, GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL, MONGO_DATABASE_HOST, MONGO_DATABASE_NAME, MONGO_DATABASE_PASSWORD, MONGO_DATABASE_PORT, MONGO_DATABASE_USERNAME, RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
+
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
 #instatiate flask app
@@ -45,11 +47,11 @@ bootstrap = Bootstrap5(app)
 db = MongoEngine()
 app.config["MONGODB_SETTINGS"] = [
     {
-        "db": "security-camera",
-        "host": "mongodb://localhost/security-camera",
-        "port": 27017,
-        "username": "admin-ifpe",
-        "password": "admin-ifpe",
+        "db": MONGO_DATABASE_NAME,
+        "host": MONGO_DATABASE_HOST,
+        "port": MONGO_DATABASE_PORT,
+        "username": MONGO_DATABASE_USERNAME,
+        "password": MONGO_DATABASE_PASSWORD,
         "alias": "default"
     }
 ]
@@ -57,6 +59,8 @@ db.init_app(app)
 #configurando mongo
 
 URL_GOOGLE_DRIVE = 'https://www.googleapis.com/upload/drive/v3/files'
+URL_GOOGLE_DRIVE_CREATE = 'https://www.googleapis.com/drive/v3/files'
+
 def read_in_chunks(file_object, CHUNK_SIZE):
     while True:
         data = file_object.read(CHUNK_SIZE)
@@ -68,12 +72,12 @@ def service_account_google(file_information):
     content_folder = file_information[0];
     content_name = file_information[1];
 
-    SCOPES = ['https://www.googleapis.com/auth/drive.file']
+    SCOPES = ['https://www.googleapis.com/auth/drive']
     SERVICE_ACCOUNT_FILE = 'google-auth/google_service_account_private_key.json'
 
     credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    creds = credentials.with_subject('security-camera-ifpe@security-camera-363502.iam.gserviceaccount.com')
+    creds = credentials.with_subject(GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
     request = Request()
     creds.refresh(request)
 
@@ -81,23 +85,23 @@ def service_account_google(file_information):
     content_size = os.stat(video_location).st_size 
     print(content_name, video_location, content_size)
 
-    payload = {"name": content_name}
-    querystring = {"uploadType": "resumable", "mimeType": "video/x-msvideo"}
+    data = {"name": content_name, 'parents': [GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID], "uploadType": "resumable"}
+    params = {"uploadType": "resumable",  "mimeType": "application/vnd.google-apps.video"}
     bearer_token = 'Bearer ' + creds.token
     headers = {
-        'Content-Length': str(content_size),
-        'Content-Type': 'application/json',
-        'X-Upload-Content-Type': 'video/x-msvideo',
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Upload-Content-Type': 'application/octet-stream',
         'Authorization': bearer_token
     }
-    response = requests.post(URL_GOOGLE_DRIVE, 
-        data=json.dumps(payload, separators=(',', ':')), 
+    response = requests.post(URL_GOOGLE_DRIVE_CREATE, 
+        data=json.dumps(data, separators=(',', ':')), 
         headers=headers, 
-        params=json.dumps(querystring, separators=(',', ':')))
-    
-    # upload_id = response.headers['X-GUploader-UploadID']
+        params=json.dumps(params, separators=(',', ':')))
     upload_id = json.loads(response.content)['id']
-
+    
+    
+    r = requests.patch(URL_GOOGLE_DRIVE + '/' + upload_id, params=params, headers=headers)
+    chunk_upload_id = r.headers['X-GUploader-UploadID']
     file_object = open(video_location, "rb")
     index = 0
     offset = 0
@@ -105,15 +109,21 @@ def service_account_google(file_information):
   
     for chunk in read_in_chunks(file_object, 262144):
         offset = index + len(chunk)
-        headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
         headers['Authorization'] = bearer_token
-        headers['uploadType'] = 'resumable'
+        headers['Content-Length'] = str(len(chunk))
+        headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
+        params = {"upload_id": chunk_upload_id, "uploadType": "resumable",  "mimeType": "application/octet-stream"}
+
         index = offset 
+
         try: 
-            data = {"data": chunk, "mimeType": "video/x-msvideo"}
-            r = requests.patch(URL_GOOGLE_DRIVE + '/' + upload_id, data=data, headers=headers)
+            files = { 'file': chunk }
+            r = requests.patch(URL_GOOGLE_DRIVE + '/' + upload_id, params=params, data=chunk, headers=headers)
             print(r.content)
+            print('')
             print("r: %s, Content-Range: %s" % (r, headers['Content-Range'])) 
+            print("r: %s, Content-Length: %s" % (r, headers['Content-Length']))
+            print('--------------------------------------------------')
         except Exception as e:
             print(e)
 
@@ -186,7 +196,7 @@ def get_frames_to_store(cap, mac_address):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     current_seconds = time.time()
-    file_location = 'video_storage/'
+    file_location = RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
     file_name = mac_address + '_' + str(current_seconds) + '.avi'
     out = cv2.VideoWriter(file_location + file_name, fourcc, 20, (frame_width, frame_height), True)
 
@@ -194,7 +204,7 @@ def get_frames_to_store(cap, mac_address):
         success, frame = cap.read()
         if success:
             try:
-                if time.time() - current_seconds <= 10:
+                if time.time() - current_seconds <= 60:
                     out.write(frame)
                 else:
                     out.release()
