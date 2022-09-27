@@ -26,7 +26,7 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
     content_size = os.stat(video_location).st_size 
 
     is_completed_upload = False
-    for chunk in read_in_chunks(file_object, 262144):
+    for chunk in __read_in_chunks(file_object, 262144):
         
         offset = index + len(chunk)
         
