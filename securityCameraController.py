@@ -5,6 +5,7 @@ from mongoMapper import User
 import emailSender
 import securityConstants
 import securityCameraServices
+import videoLocalStorer
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -32,6 +33,8 @@ app.config["MONGODB_SETTINGS"] = [
 
 db.init_app(app)
 #configurando mongo
+
+videoLocalStorer.store_cameras()
 
 @app.route('/')
 def index():
