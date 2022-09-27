@@ -14,13 +14,10 @@ import time
 from threading import Thread
 from emailSender import send_password_recovery_to_email
 from google.oauth2 import service_account
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
 import requests
 from google.auth.transport.requests import Request
 import os
-
-from securityCameraSecrets import GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID, GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL, MONGO_DATABASE_HOST, MONGO_DATABASE_NAME, MONGO_DATABASE_PASSWORD, MONGO_DATABASE_PORT, MONGO_DATABASE_USERNAME, RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
+import securityConstants
 
 #instatiate flask app
 app = Flask(__name__, template_folder='./templates')
@@ -47,11 +44,11 @@ bootstrap = Bootstrap5(app)
 db = MongoEngine()
 app.config["MONGODB_SETTINGS"] = [
     {
-        "db": MONGO_DATABASE_NAME,
-        "host": MONGO_DATABASE_HOST,
-        "port": MONGO_DATABASE_PORT,
-        "username": MONGO_DATABASE_USERNAME,
-        "password": MONGO_DATABASE_PASSWORD,
+        "db": securityConstants.MONGO_DATABASE_NAME,
+        "host": securityConstants.MONGO_DATABASE_HOST,
+        "port": securityConstants.MONGO_DATABASE_PORT,
+        "username": securityConstants.MONGO_DATABASE_USERNAME,
+        "password": securityConstants.MONGO_DATABASE_PASSWORD,
         "alias": "default"
     }
 ]
@@ -69,6 +66,7 @@ def read_in_chunks(file_object, CHUNK_SIZE):
         yield data
 
 def service_account_google(file_information):
+    
     content_folder = file_information[0];
     content_name = file_information[1];
 
@@ -77,15 +75,11 @@ def service_account_google(file_information):
 
     credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    creds = credentials.with_subject(GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+    creds = credentials.with_subject(securityConstants.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
     request = Request()
     creds.refresh(request)
 
-    video_location = content_folder + content_name;
-    content_size = os.stat(video_location).st_size 
-    print(content_name, video_location, content_size)
-
-    data = {"name": content_name, 'parents': [GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]}
+    data = {"name": content_name, 'parents': [securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]}
     params = {"uploadType": "resumable",  "mimeType": "application/vnd.google-apps.video"}
     bearer_token = 'Bearer ' + creds.token
     headers = {
@@ -93,39 +87,53 @@ def service_account_google(file_information):
         'X-Upload-Content-Type': 'application/octet-stream',
         'Authorization': bearer_token
     }
-    response = requests.post(URL_GOOGLE_DRIVE_CREATE, 
+    google_file_create_response = requests.post(URL_GOOGLE_DRIVE_CREATE, 
         data=json.dumps(data, separators=(',', ':')), 
         headers=headers, 
         params=json.dumps(params, separators=(',', ':')))
-    upload_id = json.loads(response.content)['id']
     
+    google_file_upload_id = json.loads(google_file_create_response.content)['id']
     
-    r = requests.patch(URL_GOOGLE_DRIVE + '/' + upload_id, params=params, headers=headers)
-    chunk_upload_id = r.headers['X-GUploader-UploadID']
+    google_drive_resumable_upload_id_response = requests.patch(URL_GOOGLE_DRIVE + '/' + google_file_upload_id, params=params, headers=headers)
+    resumable_upload_id = google_drive_resumable_upload_id_response.headers['X-GUploader-UploadID']
+    
+    video_location = content_folder + content_name;
     file_object = open(video_location, "rb")
     index = 0
     offset = 0
     headers = {}
-  
+    params = {}
+
+    content_size = os.stat(video_location).st_size 
+    print(content_name, video_location, content_size)
+
     for chunk in read_in_chunks(file_object, 262144):
+        
         offset = index + len(chunk)
+        
         headers['Authorization'] = bearer_token
         headers['Content-Length'] = str(len(chunk))
         headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
-        params = {"upload_id": chunk_upload_id, "uploadType": "resumable",  "mimeType": "application/octet-stream"}
+
+        params['upload_id'] = resumable_upload_id
+        params['uploadType'] = 'resumable'
+        params['mimeType'] = 'application/octet-stream'
 
         index = offset 
 
         try: 
-            files = { 'file': chunk }
-            r = requests.patch(URL_GOOGLE_DRIVE + '/' + upload_id, params=params, data=chunk, headers=headers)
-            print(r.content)
+            google_resumable_upload_response = requests.patch(URL_GOOGLE_DRIVE + '/' + google_file_upload_id, params=params, data=chunk, headers=headers)
+            if(google_resumable_upload_response.status_code == 200):
+                os.remove(video_location)
+            elif(google_resumable_upload_response.status_code >= 400):
+                print('Google Drive API Error: ' + google_resumable_upload_response.content)
             print('')
-            print("r: %s, Content-Range: %s" % (r, headers['Content-Range'])) 
-            print("r: %s, Content-Length: %s" % (r, headers['Content-Length']))
+            print("google_resumable_upload_response: %s, Content-Range: %s" % (google_resumable_upload_response, headers['Content-Range'])) 
+            print("google_resumable_upload_response: %s, Content-Length: %s" % (google_resumable_upload_response, headers['Content-Length']))
             print('--------------------------------------------------')
         except Exception as e:
             print(e)
+        
 
 def load_cameras():
     #resgatando todas as cameras do mongo
@@ -196,7 +204,7 @@ def get_frames_to_store(cap, mac_address):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     current_seconds = time.time()
-    file_location = RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
+    file_location = securityConstants.RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
     file_name = mac_address + '_' + str(current_seconds) + '.avi'
     out = cv2.VideoWriter(file_location + file_name, fourcc, 20, (frame_width, frame_height), True)
 
