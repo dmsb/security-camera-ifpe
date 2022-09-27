@@ -85,7 +85,7 @@ def service_account_google(file_information):
     content_size = os.stat(video_location).st_size 
     print(content_name, video_location, content_size)
 
-    data = {"name": content_name, 'parents': [GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID], "uploadType": "resumable"}
+    data = {"name": content_name, 'parents': [GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]}
     params = {"uploadType": "resumable",  "mimeType": "application/vnd.google-apps.video"}
     bearer_token = 'Bearer ' + creds.token
     headers = {
