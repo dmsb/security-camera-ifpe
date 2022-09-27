@@ -1,4 +1,4 @@
-from securityCameraServer import app
+from securityCameraController import app
 from waitress import serve
 
 if __name__ == '__main__':
