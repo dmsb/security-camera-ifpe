@@ -1,5 +1,5 @@
 from flask_mongoengine import MongoEngine
-from flask import Flask, request, Response, render_template, stream_with_context, redirect, url_for, session
+from flask import flash, Flask, request, Response, render_template, stream_with_context, redirect, url_for, session
 from flask_bootstrap import Bootstrap5
 from mongoMapper import User
 import emailSender
@@ -54,6 +54,7 @@ def login_post():
     if connected_user :
         session['username'] = request.form['username']
         return redirect(url_for('cameras'))
+    flash('Usuario ou senha invalidos', 'danger')
     return redirect(url_for('login_get'))
 
 @app.route('/logout')
@@ -69,8 +70,13 @@ def password_recovery_get():
 def password_recovery_post():
     email = request.form['email']
     connected_user = User.objects(username=email).first()
-    emailSender.send_password_recovery_to_email(email, connected_user.password)
-    return redirect(url_for('login_get'))
+    if connected_user:
+        flash('Por favor, verifique na caixa de entrada o e-mail de recuperacao de senha.', 'success')
+        emailSender.send_password_recovery_to_email(email, connected_user.password)
+        return redirect(url_for('login_get'))
+    else:
+        flash('E-mail nao encontrado.', 'warning')
+        return redirect(url_for('password_recovery_get'))
 
 @app.get('/cameras')
 def cameras():

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block styles %}
 {{super()}}
 <link rel="stylesheet"
@@ -21,40 +22,42 @@
         </div>
     </header>
     <div class="container container-cameras-view">
-        <div class="">
+        <div>
             Cameras de Seguranca do IFPE
         </div>
         <div class="card">
             <h5 class="card-header">Cameras Cadastradas</h5>
             <div class="card-body">
                 {% for i in range(0, cameras_matrix|length) %}
-                    <div class="row">
-                        {% for j in range(0, cameras_matrix[i]|length) %}
-                            <div class="col camera-view">
-                                <div class="card">
-                                    {% if cameras_matrix[i][j] == '0' %}
-                                        <img src="{{ url_for('video_feed', camera_ip=cameras_matrix[i][j], camera_matrix_size=cameras_matrix[i]|length) }}" />
-                                    {% endif %}
-                                    {% if cameras_matrix[i][j]|length > 1 %}
-                                        <img src="{{ url_for('video_feed', camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
-                                        <div class="card-body">
-                                            <ul class="list-group list-group-flush">
-                                                <li class="list-group-item">Departamento: {{ cameras_matrix[i][j][1].department }}</li>
-                                                <li class="list-group-item">Localizacao: {{ cameras_matrix[i][j][1].location }}</li>
-                                                <li class="list-group-item">Ponto: {{ cameras_matrix[i][j][1].specific_location }}</li>
-                                            </ul>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary">Expandir</button>
-                                                </div>
-                                                <small class="text-muted">{{ cameras_matrix[i][j][1].mac_address}}</small>
-                                            </div>
-                                        </div>
-                                    {% endif %}
+                <div class="row">
+                    {% for j in range(0, cameras_matrix[i]|length) %}
+                    <div class="col camera-view">
+                        <div class="card">
+                            
+                            {% if cameras_matrix[i][j] == '0' %}
+                            <img src="{{ url_for('video_feed', camera_ip=cameras_matrix[i][j], camera_matrix_size=cameras_matrix[i]|length) }}" />
+                            {% endif %}
+
+                            {% if cameras_matrix[i][j]|length > 1 %}
+                            <img src="{{ url_for('video_feed', camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">Departamento: {{ cameras_matrix[i][j][1].department }}</li>
+                                    <li class="list-group-item">Localizacao: {{ cameras_matrix[i][j][1].location }}</li>
+                                    <li class="list-group-item">Ponto: {{ cameras_matrix[i][j][1].specific_location }}</li>
+                                </ul>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary">Expandir</button>
+                                    </div>
+                                    <small class="text-muted">{{ cameras_matrix[i][j][1].mac_address}}</small>
                                 </div>
                             </div>
-                        {% endfor %}
+                            {% endif %}
+                        </div>
                     </div>
+                    {% endfor %}
+                </div>
                 {% endfor %}
             </div>
         </div>

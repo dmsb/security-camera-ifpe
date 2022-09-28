@@ -1,7 +1,6 @@
 
 import cv2
 import time
-import logging
 import securityConstants
 from threading import Thread
 import videoLocalLoader
@@ -21,7 +20,7 @@ def __get_frames_to_store(cap, mac_address):
         success, frame = cap.read()
         if success:
             try:
-                if time.time() - current_seconds <= 12:
+                if time.time() - current_seconds <= 600:
                     out.write(frame)
                 else:
                     out.release()
@@ -30,10 +29,10 @@ def __get_frames_to_store(cap, mac_address):
                     thread_to_upload_saved_video.start()
                     __get_frames_to_store(cap, mac_address)
             except Exception as e:
-                logging.exception(e)
                 print(e)
                 break    
         else:
+            print('Error getting frames to store')
             break
 
 def __store_cameras_thread(cameraTuple):
@@ -51,6 +50,6 @@ def store_cameras():
     
     #testando camera do notebook
     # cameraTuple = ('0', 'mac_address')
-    # new_thread_to_save_videos_in_background = Thread(target=store_cameras_thread, args=(cameraTuple,))
+    # new_thread_to_save_videos_in_background = Thread(target=__store_cameras_thread, args=(cameraTuple,))
     # new_thread_to_save_videos_in_background.start()
     #testando camera do notebook

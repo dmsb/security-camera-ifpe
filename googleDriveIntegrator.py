@@ -31,6 +31,7 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
         offset = index + len(chunk)
         
         headers['Authorization'] = bearer_token
+        headers['Accept'] = 'application/json'
         headers['Content-Length'] = str(len(chunk))
         headers['Content-Range'] = 'bytes %s-%s/%s' % (index, offset - 1, content_size)
 
@@ -44,7 +45,7 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
             google_resumable_upload_response = requests.patch(URL_GOOGLE_DRIVE + '/' + google_file_upload_id, params=params, data=chunk, headers=headers)
             
             if(google_resumable_upload_response.status_code >= 400):
-                print('Google Drive API Error: ' + google_resumable_upload_response.content)
+                print('Google Drive API Error: ' + google_resumable_upload_response.content.decode("utf-8") )
 
             is_completed_upload = google_resumable_upload_response.status_code == 200
 
@@ -54,12 +55,14 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
             print('--------------------------------------------------')
 
         except Exception as e:
+            print('Google Drive Upload Error: ' + video_location)
             print(e)
     try:
         file_object.close()
         if (is_completed_upload):
             os.remove(video_location)
     except Exception as e:
+        print('Error in close file: ' + video_location)
         print(e)
 
 def __create_file_to_video_in_google_drive(file_name, bearer_token):
@@ -67,6 +70,7 @@ def __create_file_to_video_in_google_drive(file_name, bearer_token):
     params = {"uploadType": "resumable",  "mimeType": "application/vnd.google-apps.video"}
     headers = {
         'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
         'X-Upload-Content-Type': 'application/octet-stream',
         'Authorization': bearer_token
     }
@@ -80,6 +84,7 @@ def __create_resumable_file_upload_id_from_google_drive(google_file_upload_id, b
     params = {"uploadType": "resumable",  "mimeType": "application/vnd.google-apps.video"}
     headers = {
         'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
         'X-Upload-Content-Type': 'application/octet-stream',
         'Authorization': bearer_token
     }
