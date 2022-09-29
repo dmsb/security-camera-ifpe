@@ -33,13 +33,7 @@
                     {% for j in range(0, cameras_matrix[i]|length) %}
                     <div class="col camera-view">
                         <div class="card">
-                            
-                            {% if cameras_matrix[i][j] == '0' %}
-                            <img src="{{ url_for('video_feed', camera_ip=cameras_matrix[i][j], camera_matrix_size=cameras_matrix[i]|length) }}" />
-                            {% endif %}
-
-                            {% if cameras_matrix[i][j]|length > 1 %}
-                            <img src="{{ url_for('video_feed', camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
+                            <img src="{{ url_for('video_feed', camera_mac_address=cameras_matrix[i][j][1].mac_address, camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
                             <div class="card-body">
                                 <ul class="list-group list-group-flush">
                                     <li class="list-group-item">Departamento: {{ cameras_matrix[i][j][1].department }}</li>
@@ -53,7 +47,6 @@
                                     <small class="text-muted">{{ cameras_matrix[i][j][1].mac_address}}</small>
                                 </div>
                             </div>
-                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}

@@ -85,10 +85,10 @@ def cameras():
         return render_template('cameras.html', cameras_matrix = cameras_matrix)
     return redirect(url_for('login_get'))
 
-@app.route('/video_feed/<string:camera_ip>/<int:camera_matrix_size>')
-def video_feed(camera_ip, camera_matrix_size):
+@app.route('/video_feed/<string:camera_mac_address>/<string:camera_ip>/<int:camera_matrix_size>')
+def video_feed(camera_mac_address, camera_ip, camera_matrix_size):
     if 'username' in session:
-        return Response(stream_with_context(securityCameraServices.generate_frames_to_view(camera_ip, camera_matrix_size)), mimetype='multipart/x-mixed-replace; boundary=frame')
+        return Response(stream_with_context(securityCameraServices.generate_frames_to_view(camera_mac_address, camera_ip, camera_matrix_size)), mimetype='multipart/x-mixed-replace; boundary=frame')
     return redirect(url_for('login_get'))
 
 if __name__ == '__main__':

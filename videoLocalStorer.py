@@ -32,11 +32,13 @@ def __get_frames_to_store(cap, mac_address):
                 print(e)
                 break    
         else:
-            print('Error getting frames to store')
+            print('Error getting frames to store >> %s' % (mac_address))
             break
 
 def __store_cameras_thread(cameraTuple):
-    cap = videoLocalLoader.build_video_capture(cameraTuple[0])
+    camera_ip = cameraTuple[0]
+    camera_mac_address = cameraTuple[1]
+    cap = videoLocalLoader.build_video_capture(camera_mac_address, camera_ip)
     __get_frames_to_store(cap, cameraTuple[1])
 
 def store_cameras():
@@ -47,9 +49,3 @@ def store_cameras():
         cameraTuple = (ip, mac_address)
         new_thread_to_save_videos_in_background = Thread(target=__store_cameras_thread, args=(cameraTuple,))
         new_thread_to_save_videos_in_background.start()
-    
-    #testando camera do notebook
-    # cameraTuple = ('0', 'mac_address')
-    # new_thread_to_save_videos_in_background = Thread(target=__store_cameras_thread, args=(cameraTuple,))
-    # new_thread_to_save_videos_in_background.start()
-    #testando camera do notebook

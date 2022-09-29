@@ -5,17 +5,12 @@ import string
 import secrets
 import videoLocalLoader
 
-def generate_frames_to_view(camera_ip, camera_matrix_size):
-    cap = videoLocalLoader.build_video_capture(camera_ip)
+def generate_frames_to_view(camara_mac_address, camera_ip, camera_matrix_size):
+    cap = videoLocalLoader.build_video_capture(camara_mac_address, camera_ip)
     return gen_frames_by_ip_to_view(cap, camera_matrix_size)
 
 def build_camera_matrix():
     camera_ips = videoLocalLoader.load_cameras()
-
-    #usando para testes
-    camera_ips.append('0')
-    #usando para testes
-    
     return convert_1d_to_2d(camera_ips, get_cameras_matrix_size(camera_ips))
 
 def generate_secret_key():

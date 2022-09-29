@@ -55,14 +55,14 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
             print('--------------------------------------------------')
 
         except Exception as e:
-            print('Google Drive Upload Error: ' + video_location)
+            print('Google Drive Upload Error: >> %s' % (video_location))
             print(e)
     try:
         file_object.close()
         if (is_completed_upload):
             os.remove(video_location)
     except Exception as e:
-        print('Error in close file: ' + video_location)
+        print('Error in close file >> %s' % (video_location))
         print(e)
 
 def __create_file_to_video_in_google_drive(file_name, bearer_token):
