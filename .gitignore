@@ -5,3 +5,4 @@ nginx.conf
 securityConstants.py
 google-auth
 video_storage
+record.log

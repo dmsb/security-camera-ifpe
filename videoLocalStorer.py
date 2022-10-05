@@ -20,7 +20,7 @@ def __get_frames_to_store(cap, mac_address):
         success, frame = cap.read()
         if success:
             try:
-                if time.time() - current_seconds <= 600:
+                if time.time() - current_seconds <= 60:
                     out.write(frame)
                 else:
                     out.release()

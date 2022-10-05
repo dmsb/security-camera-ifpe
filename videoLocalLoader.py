@@ -8,23 +8,25 @@ IP_VALIDATOR_REGEX  = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$"
     
 def build_video_capture(camera_mac_address, ip):
     
-    camera = Camera.objects(is_enabled=True, mac_address=camera_mac_address).first()
-
     ip_regex_check_result = re.search(IP_VALIDATOR_REGEX, ip)
 
     if ip_regex_check_result:
-        connection = (camera.network_stream_protocol
-            + '://'
-            + camera.username
-            + ':'
-            + camera.password
-            + '@'
-            + ip
-            + ':'
-            + camera.port
-            + '/'
-            + camera.compression_format)
-        return cv2.VideoCapture(connection)
+        camera = Camera.objects(is_enabled=True, mac_address=camera_mac_address).first()
+        if camera != None: 
+            connection = (camera.network_stream_protocol
+                + '://'
+                + camera.username
+                + ':'
+                + camera.password
+                + '@'
+                + ip
+                + ':'
+                + camera.port
+                + '/'
+                + camera.compression_format)
+            return cv2.VideoCapture(connection)
+        else:
+            print('Nao foi encontrado uma camera ativa para o endereco mac informado >> %s' % (camera_mac_address))
     else:
         print('IP invalido para operacao de captura de video da camera >> %s' % (ip))
 
