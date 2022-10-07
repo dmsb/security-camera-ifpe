@@ -4,6 +4,7 @@ from google.auth.transport.requests import Request
 import os
 import json
 import securityConstants
+import logging
 
 URL_GOOGLE_DRIVE = 'https://www.googleapis.com/upload/drive/v3/files'
 URL_GOOGLE_DRIVE_CREATE = 'https://www.googleapis.com/drive/v3/files'
@@ -55,15 +56,14 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
             print('--------------------------------------------------')
 
         except Exception as e:
-            print('Google Drive Upload Error: >> %s' % (video_location))
-            print(e)
+            logging.error('Google Drive Upload Error: >> %s >> %s' % (video_location, e))
     try:
         file_object.close()
         if (is_completed_upload):
             os.remove(video_location)
     except Exception as e:
-        print('Error in close file >> %s' % (video_location))
-        print(e)
+        logging.error('Error in close file >> %s' % (video_location))
+        logging.error(e)
 
 def __create_file_to_video_in_google_drive(file_name, bearer_token):
     data = {"name": file_name, 'parents': [securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]}

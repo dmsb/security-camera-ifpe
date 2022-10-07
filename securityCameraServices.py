@@ -4,6 +4,7 @@ import math
 import string
 import secrets
 import videoLocalLoader
+import logging
 
 def generate_frames_to_view(camara_mac_address, camera_ip, camera_matrix_size):
     cap = videoLocalLoader.build_video_capture(camara_mac_address, camera_ip)
@@ -47,6 +48,7 @@ def gen_frames_by_ip_to_view(cap, camera_matrix_size):
                 yield (b'--frame\r\n'
                     b'Content-Type: image/jpeg\r\n\r\n' + resized_frame + b'\r\n')
             except Exception as e:
+                logging.error('Error getting frames to store >> %s', e)
                 logging.exception(e)
                 print(e)
                 pass    

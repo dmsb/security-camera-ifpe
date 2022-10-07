@@ -3,6 +3,7 @@ from mongoMapper import Camera
 import subprocess
 import re
 import cv2
+import logging
 
 IP_VALIDATOR_REGEX  = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$"
     
@@ -26,9 +27,9 @@ def build_video_capture(camera_mac_address, ip):
                 + camera.compression_format)
             return cv2.VideoCapture(connection)
         else:
-            print('Nao foi encontrado uma camera ativa para o endereco mac informado >> %s' % (camera_mac_address))
+            logging.info('Nao foi encontrado uma camera ativa para o endereco mac informado >> %s' % (camera_mac_address))
     else:
-        print('IP invalido para operacao de captura de video da camera >> %s' % (ip))
+        logging.info('IP invalido para operacao de captura de video da camera >> %s' % (ip))
 
 def load_cameras():
 

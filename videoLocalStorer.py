@@ -5,6 +5,7 @@ import securityConstants
 from threading import Thread
 import videoLocalLoader
 from googleDriveIntegrator import upload_videos_to_google_drive
+import logging
 
 def __get_frames_to_store(cap, mac_address):
     
@@ -32,7 +33,7 @@ def __get_frames_to_store(cap, mac_address):
                 print(e)
                 break    
         else:
-            print('Error getting frames to store >> %s' % (mac_address))
+            logging.info('Error getting frames to store >> %s' % (mac_address))
             break
 
 def __store_cameras_thread(cameraTuple):

@@ -36,8 +36,6 @@ app.config["MONGODB_SETTINGS"] = [
 db.init_app(app)
 #configurando mongo
 
-videoLocalStorer.store_cameras()
-
 @app.route('/')
 def index():
     return redirect(url_for('login_get'))
@@ -113,4 +111,7 @@ if __name__ == '__main__':
     app.logger.addHandler(handler)
     app.logger.setLevel(log_level)
     
-    app.run(debug=False, host='0.0.0.0', threaded=True)
+    app.run(debug=False, host='192.168.15.101', threaded=True)
+
+    # videoLocalStorer.store_cameras()
+
