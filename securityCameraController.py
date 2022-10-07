@@ -93,6 +93,8 @@ def video_feed(camera_mac_address, camera_ip, camera_matrix_size):
         return Response(stream_with_context(securityCameraServices.generate_frames_to_view(camera_mac_address, camera_ip, camera_matrix_size)), mimetype='multipart/x-mixed-replace; boundary=frame')
     return redirect(url_for('login_get'))
 
+videoLocalStorer.store_cameras()
+
 if __name__ == '__main__':
     
     formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -111,7 +113,5 @@ if __name__ == '__main__':
     app.logger.addHandler(handler)
     app.logger.setLevel(log_level)
     
-    app.run(debug=False, host='192.168.15.101', threaded=True)
-
-    # videoLocalStorer.store_cameras()
+    app.run(debug=False, host='0.0.0.0', threaded=True)
 

@@ -5,7 +5,11 @@ import os
 import json
 import securityConstants
 import logging
+from googleapiclient.discovery import build
+from datetime import datetime
 
+DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive']
+SERVICE_ACCOUNT_FILE = 'google-auth/google_service_account_private_key.json'
 URL_GOOGLE_DRIVE = 'https://www.googleapis.com/upload/drive/v3/files'
 URL_GOOGLE_DRIVE_CREATE = 'https://www.googleapis.com/drive/v3/files'
 
@@ -46,7 +50,7 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
             google_resumable_upload_response = requests.patch(URL_GOOGLE_DRIVE + '/' + google_file_upload_id, params=params, data=chunk, headers=headers)
             
             if(google_resumable_upload_response.status_code >= 400):
-                print('Google Drive API Error: ' + google_resumable_upload_response.content.decode("utf-8") )
+                logging.error('Google Drive API Error: ' + google_resumable_upload_response.content.decode("utf-8"))
 
             is_completed_upload = google_resumable_upload_response.status_code == 200
 
@@ -66,18 +70,20 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
         logging.error(e)
 
 def __create_file_to_video_in_google_drive(file_name, bearer_token):
-    data = {"name": file_name, 'parents': [securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]}
-    params = {"uploadType": "resumable",  "mimeType": "application/vnd.google-apps.video"}
-    headers = {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Accept': 'application/json',
-        'X-Upload-Content-Type': 'application/octet-stream',
-        'Authorization': bearer_token
-    }
-    return requests.post(URL_GOOGLE_DRIVE_CREATE, 
-        data=json.dumps(data, separators=(',', ':')), 
-        headers=headers, 
-        params=json.dumps(params, separators=(',', ':')))
+    folder_to_upload = build_folder_to_upload()
+    if folder_to_upload:
+        data = {"name": file_name, 'parents': [folder_to_upload]}
+        params = {"uploadType": "resumable",  "mimeType": "application/vnd.google-apps.video"}
+        headers = {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Accept': 'application/json',
+            'X-Upload-Content-Type': 'application/octet-stream',
+            'Authorization': bearer_token
+        }
+        return requests.post(URL_GOOGLE_DRIVE_CREATE, 
+            data=json.dumps(data, separators=(',', ':')), 
+            headers=headers, 
+            params=json.dumps(params, separators=(',', ':')))
 
 def __create_resumable_file_upload_id_from_google_drive(google_file_upload_id, bearer_token):
 
@@ -98,11 +104,8 @@ def upload_videos_to_google_drive(file_information):
     file_folder = file_information[0];
     file_name = file_information[1];
 
-    SCOPES = ['https://www.googleapis.com/auth/drive']
-    SERVICE_ACCOUNT_FILE = 'google-auth/google_service_account_private_key.json'
-
     credentials = service_account.Credentials.from_service_account_file(
-            SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+            SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
 
     credentialsWithSuject = credentials.with_subject(securityConstants.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
     request = Request()
@@ -116,5 +119,34 @@ def upload_videos_to_google_drive(file_information):
     video_location = file_folder + file_name
 
     __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumable_upload_id, google_file_upload_id)
-    
+
+def build_folder_to_upload():
+
+    try:
+        credentials = service_account.Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
+
+        credentialsWithSuject = credentials.with_subject(securityConstants.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+        request = Request()
+        credentialsWithSuject.refresh(request)
+
+        current_date = datetime.today().date()
+        folder_name = str(current_date)
+
+        service = build('drive', 'v3', credentials=credentialsWithSuject)
+        response = service.files().list(q="mimeType='application/vnd.google-apps.folder' and name = '%s' and '%s' in parents"
+            % (folder_name, securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID)).execute()
         
+        if response['files'] and response['files'][0]['name'] == folder_name:
+            return response['files'][0]['id']
+        else:
+            file_metadata = {
+                'name': folder_name,
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]
+            }
+            response = service.files().create(body=file_metadata, fields='id').execute()
+            return response.get("id")
+    except Exception as e:
+        logging.error('Google Drive Get Folder to Upload Error: >> Folder: %s >> %s' % (current_date, e))
+    return None
