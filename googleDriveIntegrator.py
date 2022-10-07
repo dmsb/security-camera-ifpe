@@ -137,8 +137,9 @@ def build_folder_to_upload():
         folders_response = service.files().list(q="mimeType='application/vnd.google-apps.folder' and '%s' in parents"
             % (securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID)).execute()
         
-        todays_folder = list(filter(lambda item: (item['name'] == folder_name), folders_response['files']))[0]
-            
+        todays_folder_filtered = list(filter(lambda item: (item['name'] == folder_name), folders_response['files']))
+        todays_folder = todays_folder_filtered[0] if len(todays_folder_filtered) > 0 else None
+        
         if not todays_folder:
             file_metadata = {
                 'name': folder_name,
@@ -148,7 +149,7 @@ def build_folder_to_upload():
             created_folder_response = service.files().create(body=file_metadata, fields='id').execute()
             todays_folder = created_folder_response
 
-        if len(folders_response['files']) >= 30:
+        if len(folders_response['files']) >= 2:
             previous_month = datetime.today() - timedelta(days=30)
             folder_name_to_delete = str(previous_month.date())
             drive_folder_to_delete = list(filter(lambda item: (item['name'] == folder_name_to_delete), folders_response['files']))
