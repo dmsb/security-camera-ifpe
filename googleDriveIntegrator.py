@@ -6,7 +6,7 @@ import json
 import securityConstants
 import logging
 from googleapiclient.discovery import build
-from datetime import datetime
+from datetime import datetime, timedelta
 
 DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_FILE = 'google-auth/google_service_account_private_key.json'
@@ -130,23 +130,35 @@ def build_folder_to_upload():
         request = Request()
         credentialsWithSuject.refresh(request)
 
-        current_date = datetime.today().date()
-        folder_name = str(current_date)
+        today = datetime.today().date()
+        folder_name = str(today)
 
         service = build('drive', 'v3', credentials=credentialsWithSuject)
-        response = service.files().list(q="mimeType='application/vnd.google-apps.folder' and name = '%s' and '%s' in parents"
-            % (folder_name, securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID)).execute()
+        folders_response = service.files().list(q="mimeType='application/vnd.google-apps.folder' and '%s' in parents"
+            % (securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID)).execute()
         
-        if response['files'] and response['files'][0]['name'] == folder_name:
-            return response['files'][0]['id']
-        else:
+        todays_folder = list(filter(lambda item: (item['name'] == folder_name), folders_response['files']))[0]
+            
+        if not todays_folder:
             file_metadata = {
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder',
                 'parents': [securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]
             }
-            response = service.files().create(body=file_metadata, fields='id').execute()
-            return response.get("id")
+            created_folder_response = service.files().create(body=file_metadata, fields='id').execute()
+            todays_folder = created_folder_response
+
+        if len(folders_response['files']) >= 30:
+            previous_month = datetime.today() - timedelta(days=30)
+            folder_name_to_delete = str(previous_month.date())
+            drive_folder_to_delete = list(filter(lambda item: (item['name'] == folder_name_to_delete), folders_response['files']))
+            if drive_folder_to_delete:
+                service.files().delete(fileId=drive_folder_to_delete[0]['id']).execute()
+
+        return todays_folder['id']
+
     except Exception as e:
-        logging.error('Google Drive Get Folder to Upload Error: >> Folder: %s >> %s' % (current_date, e))
+        logging.error('Google Drive Get Folder to Upload Error: >> Folder: %s >> %s' % (folder_name, e))
     return None
+
+build_folder_to_upload()
