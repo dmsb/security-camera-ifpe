@@ -1,4 +1,5 @@
 
+from datetime import datetime, timedelta
 import cv2
 import time
 import securityConstants
@@ -9,19 +10,29 @@ import logging
 
 def __get_frames_to_store(cap, mac_address):
     
+    RECORDING_TIME_IN_SECONDS = 3600
+
     fourcc = cv2.VideoWriter_fourcc('X','V','I','D')
+
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
-    current_seconds = time.time()
+    
     file_location = securityConstants.RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
-    file_name = mac_address + '_' + str(current_seconds) + '.avi'
+
+    initial_time_to_video_label = datetime.now().strftime('%d_%m_%Y__%H_%M_%S')
+    finish_time_to_video_label = (datetime.now() + timedelta(seconds = RECORDING_TIME_IN_SECONDS)).strftime('%d_%m_%Y__%H_%M_%S')
+
+    file_name = mac_address + '_' + initial_time_to_video_label + '_until_' + finish_time_to_video_label + '.avi'
+
     out = cv2.VideoWriter(file_location + file_name, fourcc, 20, (frame_width, frame_height), True)
+    
+    current_seconds = time.time()
 
     while True:
         success, frame = cap.read()
         if success:
             try:
-                if time.time() - current_seconds <= 30:
+                if time.time() - current_seconds <= RECORDING_TIME_IN_SECONDS:
                     out.write(frame)
                 else:
                     out.release()

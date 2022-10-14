@@ -32,8 +32,9 @@ def get_cameras_matrix_size(camera_ips):
     return math.ceil(math.sqrt(cameras_quantity))
     
 def resize_img_from_matriz_size(frame, camera_matrix_size):
-    width = int(frame.shape[1] / camera_matrix_size)
-    height = int(frame.shape[0] / camera_matrix_size)
+    height = int(frame.shape[0] / (camera_matrix_size * 1.5))
+    width = int(frame.shape[1] / (camera_matrix_size * 1.5))
+    # dim = (width, height)
     dim = (width, height)
     return cv2.resize(frame, dim, interpolation = cv2.INTER_AREA)
 

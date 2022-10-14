@@ -161,5 +161,3 @@ def build_folder_to_upload():
     except Exception as e:
         logging.error('Google Drive Get Folder to Upload Error: >> Folder: %s >> %s' % (folder_name, e))
     return None
-
-build_folder_to_upload()

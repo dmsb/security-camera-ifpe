@@ -20,3 +20,4 @@ class Camera(me.Document):
     password = me.StringField()
     username = me.StringField()
     port = me.StringField()
+    company = me.StringField()
