@@ -13,9 +13,8 @@ TIME_PATTERN = '%d_%m_%Y__%H_%M_%S'
 
 def __get_frames_to_store(cap, camera):
     
-    RECORDING_TIME_IN_SECONDS = 20
-
-    fourcc = cv2.VideoWriter_fourcc(*'X264')
+    RECORDING_TIME_IN_SECONDS = 1600
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')
 
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
@@ -25,7 +24,7 @@ def __get_frames_to_store(cap, camera):
     initial_time_to_video_label = datetime.now().strftime(TIME_PATTERN)
     finish_time_to_video_label = (datetime.now() + timedelta(seconds = RECORDING_TIME_IN_SECONDS)).strftime(TIME_PATTERN)
 
-    file_name = str(random.randint(1, 99999)) + '_' + camera.mac_address + '_' + initial_time_to_video_label + '_until_' + finish_time_to_video_label + '.avi'
+    file_name = str(random.randint(1, 99999)) + '_' + camera.mac_address + '_' + initial_time_to_video_label + '_until_' + finish_time_to_video_label + '.mp4'
 
     out = cv2.VideoWriter(file_location + file_name, fourcc, 20, (frame_width, frame_height))
     

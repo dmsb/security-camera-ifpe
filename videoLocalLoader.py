@@ -33,13 +33,7 @@ def build_video_capture(camera_mac_address, ip):
 
 def load_cameras():
 
-    camera_result = Camera.objects(is_enabled=True).only('_id', 'mac_address', 'department', 'location', 'brand', 'model', 'specific_location').first()
-    
-    cameras = [] 
-    if isinstance (camera_result, list):  
-        cameras = camera_result
-    else:
-        cameras.append(camera_result)
+    cameras = Camera.objects(is_enabled=True).only('_id', 'mac_address', 'department', 'location', 'brand', 'model', 'specific_location')
     
     addresses = subprocess.check_output(['arp', '-a'])
     network_adds = addresses.decode('windows-1252').splitlines()

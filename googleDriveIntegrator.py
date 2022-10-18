@@ -204,5 +204,4 @@ def __clear_cloud_storage():
             print(result)
             result.execute()
 
-
-
+# __clear_cloud_storage()
