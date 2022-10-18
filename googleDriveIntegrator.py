@@ -1,4 +1,11 @@
+import base64
+import hashlib
+import re
+from flask import Flask
+import securityCameraServices
+import flask
 from google.oauth2 import service_account
+import google_auth_oauthlib
 import requests
 from google.auth.transport.requests import Request
 import os
@@ -54,10 +61,10 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
 
             is_completed_upload = google_resumable_upload_response.status_code == 200
 
-            print('')
-            print("google_resumable_upload_response: %s, Content-Range: %s" % (google_resumable_upload_response, headers['Content-Range'])) 
-            print("google_resumable_upload_response: %s, Content-Length: %s" % (google_resumable_upload_response, headers['Content-Length']))
-            print('--------------------------------------------------')
+            # print('')
+            # print("google_resumable_upload_response: %s, Content-Range: %s" % (google_resumable_upload_response, headers['Content-Range'])) 
+            # print("google_resumable_upload_response: %s, Content-Length: %s" % (google_resumable_upload_response, headers['Content-Length']))
+            # print('--------------------------------------------------')
 
         except Exception as e:
             logging.error('Google Drive Upload Error: >> %s >> %s' % (video_location, e))
@@ -161,3 +168,41 @@ def build_folder_to_upload():
     except Exception as e:
         logging.error('Google Drive Get Folder to Upload Error: >> Folder: %s >> %s' % (folder_name, e))
     return None
+
+
+def __clear_cloud_storage():
+    credentials = service_account.Credentials.from_service_account_file(
+            SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
+
+    credentialsWithSuject = credentials.with_subject(securityConstants.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+    request = Request()
+    credentialsWithSuject.refresh(request)
+    bearer_token = 'Bearer ' + credentialsWithSuject.token
+
+    params = {"fields": "*"}
+    headers = { 'Authorization': bearer_token }
+
+    result = requests.get('https://www.googleapis.com/drive/v3/about?fields=*',
+        headers=headers, 
+        params=json.dumps(params, separators=(',', ':')))
+
+    print(result.text)
+
+    result = requests.get('https://www.googleapis.com/drive/v3/files',
+        headers=headers, 
+        params=json.dumps(params, separators=(',', ':')))
+
+    print(result.text)
+
+    service = build('drive', 'v3', credentials=credentialsWithSuject)
+    folders_response = service.files().list().execute()
+    print(folders_response)
+
+    for folder in folders_response['files']:
+        if folder['mimeType'] != 'application/vnd.google-apps.folder':
+            result = service.files().delete(fileId=folder['id'])
+            print(result)
+            result.execute()
+
+
+
