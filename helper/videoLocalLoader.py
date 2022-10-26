@@ -26,7 +26,7 @@ def build_video_capture(camera, ip):
                 + camera['compression_format'])
             return cv2.VideoCapture(connection)
         else:
-            logging.info('Nao foi encontrado uma camera ativa para o endereco mac informado >> %s' % (camera_mac_address))
+            logging.info('Nao foi encontrado uma camera ativa para o endereco mac informado >> %s' % (camera['mac_address']))
     else:
         logging.info('IP invalido para operacao de captura de video da camera >> %s' % (ip))
 

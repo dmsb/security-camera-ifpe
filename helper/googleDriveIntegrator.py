@@ -1,9 +1,9 @@
+import configparser
 from google.oauth2 import service_account
 import requests
 from google.auth.transport.requests import Request
 import os
 import json
-from helper import private
 import logging
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
@@ -12,6 +12,9 @@ DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_FILE = 'google-auth/google_service_account_private_key.json'
 URL_GOOGLE_DRIVE = 'https://www.googleapis.com/upload/drive/v3/files'
 URL_GOOGLE_DRIVE_CREATE = 'https://www.googleapis.com/drive/v3/files'
+
+config = configparser.ConfigParser()
+config.read(os.path.abspath(os.path.join(".ini")))
 
 def __read_in_chunks(file_object, CHUNK_SIZE):
     while True:
@@ -107,7 +110,7 @@ def upload_videos_to_google_drive(file_information):
     credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
 
-    credentialsWithSuject = credentials.with_subject(private.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+    credentialsWithSuject = credentials.with_subject(config['GENERAL']['GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL'])
     request = Request()
     credentialsWithSuject.refresh(request)
     bearer_token = 'Bearer ' + credentialsWithSuject.token
@@ -126,7 +129,7 @@ def build_folder_to_upload():
         credentials = service_account.Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
 
-        credentialsWithSuject = credentials.with_subject(private.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+        credentialsWithSuject = credentials.with_subject(config['GENERAL']['GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL'])
         request = Request()
         credentialsWithSuject.refresh(request)
 
@@ -135,7 +138,7 @@ def build_folder_to_upload():
 
         service = build('drive', 'v3', credentials=credentialsWithSuject)
         folders_response = service.files().list(q="mimeType='application/vnd.google-apps.folder' and '%s' in parents"
-            % (private.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID)).execute()
+            % (config['GENERAL']['GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID'])).execute()
         
         todays_folder_filtered = list(filter(lambda item: (item['name'] == folder_name), folders_response['files']))
         todays_folder = todays_folder_filtered[0] if len(todays_folder_filtered) > 0 else None
@@ -144,7 +147,7 @@ def build_folder_to_upload():
             file_metadata = {
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder',
-                'parents': [private.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]
+                'parents': [config['GENERAL']['GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID']]
             }
             created_folder_response = service.files().create(body=file_metadata, fields='id').execute()
             todays_folder = created_folder_response
@@ -167,7 +170,7 @@ def __clear_cloud_storage():
     credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
 
-    credentialsWithSuject = credentials.with_subject(private.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+    credentialsWithSuject = credentials.with_subject(config['GENERAL']['GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL'])
     request = Request()
     credentialsWithSuject.refresh(request)
     bearer_token = 'Bearer ' + credentialsWithSuject.token

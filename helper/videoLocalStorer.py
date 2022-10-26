@@ -1,12 +1,16 @@
 
+import configparser
 from datetime import datetime, timedelta
+import os
 import cv2
 import time
-from helper import private
 from threading import Thread
 from helper import videoLocalLoader
 from helper.googleDriveIntegrator import upload_videos_to_google_drive
 import logging
+
+config = configparser.ConfigParser()
+config.read(os.path.abspath(os.path.join(".ini")))
 
 TIME_PATTERN = '%d_%m_%Y__%H_%M_%S'
 
@@ -18,7 +22,7 @@ def __get_frames_to_store(cap, camera):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     
-    file_location = private.RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
+    file_location = config['GENERAL']['RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS']
 
     initial_time_to_video_label = datetime.now().strftime(TIME_PATTERN)
     finish_time_to_video_label = (datetime.now() + timedelta(seconds = RECORDING_TIME_IN_SECONDS)).strftime(TIME_PATTERN)
