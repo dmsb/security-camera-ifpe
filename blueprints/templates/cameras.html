@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{super()}}
+<link rel="stylesheet"
+      href="{{url_for('static', filename='css/cameras.css')}}">
+{% endblock %}
+{% block content %}
+    {{ super() }}
+    <header class="bg-header-container">
+        <div class="container container-header">
+            <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+                <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+                    <li class="nav-link px-7 text-white">Patrimonio+Seguro</li>
+                </ul>
+                <div class="logout-btn">
+                    <form action="{{ url_for('security_camera_api_v1.logout') }}">
+                        <input type="submit" class="btn btn-outline-light" value="Sair" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="container container-cameras-view">
+        <div class="card">
+            <h5 class="card-header">Cameras ativas ao vivo</h5>
+            <div class="card-body">
+                {% if cameras_matrix %}
+                    {% for i in range(0, cameras_matrix|length) %}
+                    <div class="row">
+                        {% for j in range(0, cameras_matrix[i]|length) %}
+                        <div class="col camera-view">
+                            <div class="card">
+                                <img src="{{ url_for('security_camera_api_v1.video_feed', camera_mac_address=cameras_matrix[i][j][1].mac_address, camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">Departamento: {{ cameras_matrix[i][j][1].department }}</li>
+                                        <li class="list-group-item">Localizacao: {{ cameras_matrix[i][j][1].location }}</li>
+                                        <li class="list-group-item">Ponto: {{ cameras_matrix[i][j][1].specific_location }}</li>
+                                    </ul>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">{{ cameras_matrix[i][j][1].mac_address}}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                <div class="row">
+                    <div class="col camera-view">
+                        <div class="card">
+                            {{message}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

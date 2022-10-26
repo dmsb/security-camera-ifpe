@@ -2,12 +2,11 @@
 from datetime import datetime, timedelta
 import cv2
 import time
-import securityConstants
+from helper import private
 from threading import Thread
-import videoLocalLoader
-from googleDriveIntegrator import upload_videos_to_google_drive
+from helper import videoLocalLoader
+from helper.googleDriveIntegrator import upload_videos_to_google_drive
 import logging
-import random
 
 TIME_PATTERN = '%d_%m_%Y__%H_%M_%S'
 
@@ -19,12 +18,12 @@ def __get_frames_to_store(cap, camera):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     
-    file_location = securityConstants.RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
+    file_location = private.RELATIVE_LOCAL_STORAGE_VIDEO_CAMERAS
 
     initial_time_to_video_label = datetime.now().strftime(TIME_PATTERN)
     finish_time_to_video_label = (datetime.now() + timedelta(seconds = RECORDING_TIME_IN_SECONDS)).strftime(TIME_PATTERN)
 
-    file_name = str(random.randint(1, 99999)) + '_' + camera.mac_address + '_' + initial_time_to_video_label + '_until_' + finish_time_to_video_label + '.mp4'
+    file_name = camera['mac_address'] + '_' + initial_time_to_video_label + '_until_' + finish_time_to_video_label + '.mp4'
 
     out = cv2.VideoWriter(file_location + file_name, fourcc, 20, (frame_width, frame_height))
     
@@ -46,13 +45,13 @@ def __get_frames_to_store(cap, camera):
                 print(e)
                 break    
         else:
-            logging.info('Error getting frames to store >> %s' % (camera.mac_address))
+            logging.info('Error getting frames to store >> %s' % (camera['mac_address']))
             break
 
 def __store_cameras_thread(camera_tuple):
     camera_ip = camera_tuple[0]
     camera = camera_tuple[1]
-    cap = videoLocalLoader.build_video_capture(camera.mac_address, camera_ip)
+    cap = videoLocalLoader.build_video_capture(camera, camera_ip)
     __get_frames_to_store(cap, camera)
 
 def store_cameras():

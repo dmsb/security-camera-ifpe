@@ -2,7 +2,8 @@
 __pycache__
 certificate
 nginx.conf
-securityConstants.py
+private.py
 google-auth
 video_storage
-record.log
+*.log
+.ini

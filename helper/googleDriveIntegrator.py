@@ -1,16 +1,9 @@
-import base64
-import hashlib
-import re
-from flask import Flask
-import securityCameraServices
-import flask
 from google.oauth2 import service_account
-import google_auth_oauthlib
 import requests
 from google.auth.transport.requests import Request
 import os
 import json
-import securityConstants
+from helper import private
 import logging
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
@@ -114,7 +107,7 @@ def upload_videos_to_google_drive(file_information):
     credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
 
-    credentialsWithSuject = credentials.with_subject(securityConstants.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+    credentialsWithSuject = credentials.with_subject(private.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
     request = Request()
     credentialsWithSuject.refresh(request)
     bearer_token = 'Bearer ' + credentialsWithSuject.token
@@ -133,7 +126,7 @@ def build_folder_to_upload():
         credentials = service_account.Credentials.from_service_account_file(
                 SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
 
-        credentialsWithSuject = credentials.with_subject(securityConstants.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+        credentialsWithSuject = credentials.with_subject(private.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
         request = Request()
         credentialsWithSuject.refresh(request)
 
@@ -142,7 +135,7 @@ def build_folder_to_upload():
 
         service = build('drive', 'v3', credentials=credentialsWithSuject)
         folders_response = service.files().list(q="mimeType='application/vnd.google-apps.folder' and '%s' in parents"
-            % (securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID)).execute()
+            % (private.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID)).execute()
         
         todays_folder_filtered = list(filter(lambda item: (item['name'] == folder_name), folders_response['files']))
         todays_folder = todays_folder_filtered[0] if len(todays_folder_filtered) > 0 else None
@@ -151,12 +144,12 @@ def build_folder_to_upload():
             file_metadata = {
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder',
-                'parents': [securityConstants.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]
+                'parents': [private.GOOGLE_DRIVE_SECURITY_CAMERA_VIDEO_FOLDER_ID]
             }
             created_folder_response = service.files().create(body=file_metadata, fields='id').execute()
             todays_folder = created_folder_response
 
-        if len(folders_response['files']) >= 2:
+        if len(folders_response['files']) >= 30:
             previous_month = datetime.today() - timedelta(days=30)
             folder_name_to_delete = str(previous_month.date())
             drive_folder_to_delete = list(filter(lambda item: (item['name'] == folder_name_to_delete), folders_response['files']))
@@ -174,7 +167,7 @@ def __clear_cloud_storage():
     credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
 
-    credentialsWithSuject = credentials.with_subject(securityConstants.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
+    credentialsWithSuject = credentials.with_subject(private.GOOGLE_DRIVE_SERVICE_ACCOUNT_EMAIL)
     request = Request()
     credentialsWithSuject.refresh(request)
     bearer_token = 'Bearer ' + credentialsWithSuject.token
@@ -182,26 +175,23 @@ def __clear_cloud_storage():
     params = {"fields": "*"}
     headers = { 'Authorization': bearer_token }
 
-    result = requests.get('https://www.googleapis.com/drive/v3/about?fields=*',
+    resultA = requests.get('https://www.googleapis.com/drive/v3/about?fields=*',
         headers=headers, 
         params=json.dumps(params, separators=(',', ':')))
 
-    print(result.text)
+    print(json.loads(resultA.text)['storageQuota'])
 
     result = requests.get('https://www.googleapis.com/drive/v3/files',
         headers=headers, 
         params=json.dumps(params, separators=(',', ':')))
 
-    print(result.text)
-
     service = build('drive', 'v3', credentials=credentialsWithSuject)
-    folders_response = service.files().list().execute()
+    folders_response = service.files().list(q="'security-camera-ifpe@security-camera-363502.iam.gserviceaccount.com' in owners").execute()
     print(folders_response)
 
     for folder in folders_response['files']:
-        if folder['mimeType'] != 'application/vnd.google-apps.folder':
-            result = service.files().delete(fileId=folder['id'])
-            print(result)
-            result.execute()
+        result = service.files().delete(fileId=folder['id'])
+        print(result)
+        result.execute()
 
 # __clear_cloud_storage()

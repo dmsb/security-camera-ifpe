@@ -1,6 +1,6 @@
 import smtplib
 from email.message import EmailMessage
-from securityConstants import SERVER_EMAIL_ADDRESS, SERVER_EMAIL_PASSWORD
+from helper.private import SERVER_EMAIL_ADDRESS, SERVER_EMAIL_PASSWORD
 
 def send_password_recovery_to_email(user_email, current_password):
     msg = EmailMessage()

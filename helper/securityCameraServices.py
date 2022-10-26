@@ -1,28 +1,17 @@
 import cv2
 import logging
 import math
-import string
-import secrets
-import videoLocalLoader
-import logging
+from helper import videoLocalLoader
+from helper import db
 
 def generate_frames_to_view(camara_mac_address, camera_ip, camera_matrix_size):
-    cap = videoLocalLoader.build_video_capture(camara_mac_address, camera_ip)
+    camera = db.get_camera_by_filter({'is_enabled':True, 'mac_address':camara_mac_address})
+    cap = videoLocalLoader.build_video_capture(camera, camera_ip)
     return gen_frames_by_ip_to_view(cap, camera_matrix_size)
 
 def build_camera_matrix():
     camera_ips = videoLocalLoader.load_cameras()
-    return convert_1d_to_2d(camera_ips, get_cameras_matrix_size(camera_ips))
-
-def generate_secret_key():
-    alphabet = string.ascii_letters + string.digits
-
-    while True:
-        password = ''.join(secrets.choice(alphabet) for i in range(10))
-        if (any(c.islower() for c in password)
-                and any(c.isupper() for c in password)
-                and sum(c.isdigit() for c in password) >= 3):
-            return password
+    return convert_1d_to_2d(camera_ips, get_cameras_matrix_size(camera_ips)) if camera_ips else None
 
 def convert_1d_to_2d(l, cols):
     return [l[i:i + cols] for i in range(0, len(l), cols)]
