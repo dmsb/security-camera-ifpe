@@ -11,7 +11,7 @@ from bson import json_util, ObjectId
 from datetime import datetime
 from flask_bootstrap import Bootstrap5
 from blueprints.securityCameraBlueprint import security_camera_api_v1
-from helper import videoLocalStorer
+from helpers import videoLocalStorer
 
 bootstrap = Bootstrap5()
 

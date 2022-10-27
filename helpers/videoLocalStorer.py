@@ -5,8 +5,8 @@ import os
 import cv2
 import time
 from threading import Thread
-from helper import videoLocalLoader
-from helper.googleDriveIntegrator import upload_videos_to_google_drive
+from helpers import videoLocalLoader
+from helpers.googleDriveIntegrator import upload_videos_to_google_drive
 import logging
 
 config = configparser.ConfigParser()

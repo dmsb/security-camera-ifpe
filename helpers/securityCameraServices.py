@@ -1,8 +1,8 @@
 import cv2
 import logging
 import math
-from helper import videoLocalLoader
-from helper import db
+from helpers import videoLocalLoader
+from helpers import db
 
 def generate_frames_to_view(camara_mac_address, camera_ip, camera_matrix_size):
     camera = db.get_camera_by_filter({'is_enabled':True, 'mac_address':camara_mac_address})
