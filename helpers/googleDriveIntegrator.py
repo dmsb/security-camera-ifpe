@@ -1,20 +1,19 @@
-import configparser
 from google.oauth2 import service_account
 import requests
 from google.auth.transport.requests import Request
 import os
 import json
-import logging
+from flask import current_app
 from googleapiclient.discovery import build
 from datetime import datetime, timedelta
+from helpers.pythonAuxiliary import get_ini_config
 
 DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive']
 SERVICE_ACCOUNT_FILE = 'google-auth/google_service_account_private_key.json'
 URL_GOOGLE_DRIVE = 'https://www.googleapis.com/upload/drive/v3/files'
 URL_GOOGLE_DRIVE_CREATE = 'https://www.googleapis.com/drive/v3/files'
 
-config = configparser.ConfigParser()
-config.read(os.path.abspath(os.path.join(".ini")))
+config = get_ini_config()
 
 def __read_in_chunks(file_object, CHUNK_SIZE):
     while True:
@@ -53,7 +52,7 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
             google_resumable_upload_response = requests.patch(URL_GOOGLE_DRIVE + '/' + google_file_upload_id, params=params, data=chunk, headers=headers)
             
             if(google_resumable_upload_response.status_code >= 400):
-                logging.error('Google Drive API Error: ' + google_resumable_upload_response.content.decode("utf-8"))
+                current_app.logger.error('Google Drive API Error: ' + google_resumable_upload_response.content.decode("utf-8"))
 
             is_completed_upload = google_resumable_upload_response.status_code == 200
 
@@ -63,14 +62,14 @@ def __upload_chunkeds_file_to_google_drive(video_location, bearer_token, resumab
             # print('--------------------------------------------------')
 
         except Exception as e:
-            logging.error('Google Drive Upload Error: >> %s >> %s' % (video_location, e))
+            current_app.logger.error('Google Drive Upload Error: >> %s >> %s' % (video_location, e))
     try:
         file_object.close()
         if (is_completed_upload):
             os.remove(video_location)
     except Exception as e:
-        logging.error('Error in close file >> %s' % (video_location))
-        logging.error(e)
+        current_app.logger.error('Error in close file >> %s' % (video_location))
+        current_app.logger.error(e)
 
 def __create_file_to_video_in_google_drive(file_name, bearer_token):
     folder_to_upload = build_folder_to_upload()
@@ -103,9 +102,11 @@ def __create_resumable_file_upload_id_from_google_drive(google_file_upload_id, b
     
 
 def upload_videos_to_google_drive(file_information):
-    
+
     file_folder = file_information[0];
     file_name = file_information[1];
+    
+    current_app.logger.info('upload started >> %s', file_name)
 
     credentials = service_account.Credentials.from_service_account_file(
             SERVICE_ACCOUNT_FILE, scopes=DRIVE_SCOPE)
@@ -162,7 +163,7 @@ def build_folder_to_upload():
         return todays_folder['id']
 
     except Exception as e:
-        logging.error('Google Drive Get Folder to Upload Error: >> Folder: %s >> %s' % (folder_name, e))
+        current_app.logger.error('Google Drive Get Folder to Upload Error: >> Folder: %s >> %s' % (folder_name, e))
     return None
 
 

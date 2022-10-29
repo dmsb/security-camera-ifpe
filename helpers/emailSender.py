@@ -2,6 +2,7 @@ import configparser
 import os
 import smtplib
 from email.message import EmailMessage
+from flask import current_app
 
 config = configparser.ConfigParser()
 config.read(os.path.abspath(os.path.join(".ini")))
@@ -18,3 +19,4 @@ def send_password_recovery_to_email(user_email, current_password):
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
         smtp.login(config['GENERAL']['SERVER_EMAIL_ADDRESS'], config['GENERAL']['SERVER_EMAIL_PASSWORD']) 
         smtp.send_message(msg)
+    current_app.logger.info('E-mail de recuperacao enviado para >> %s', user_email)

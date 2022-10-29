@@ -1,4 +1,3 @@
-import configparser
 from json import JSONEncoder
 import logging
 import os
@@ -12,8 +11,9 @@ from datetime import datetime
 from flask_bootstrap import Bootstrap5
 from blueprints.securityCameraBlueprint import security_camera_api_v1
 from helpers import videoLocalStorer
-
+from flaskThread import CustomFlaskThread
 bootstrap = Bootstrap5()
+from helpers.pythonAuxiliary import get_ini_config
 
 class MongoJsonEncoder(JSONEncoder):
     def default(self, obj):
@@ -50,24 +50,13 @@ def create_app(envirovment):
     app.secret_key = generate_secret_key()
     #Set the secret key to some random bytes
 
-    config = configparser.ConfigParser()
-    config.read(os.path.abspath(os.path.join(".ini")))
-
     #log configuration
-    app.config['DEBUG'] = True
-    log_level = logging.DEBUG
-
-    for handler in app.logger.handlers:
-        app.logger.removeHandler(handler)
-
+    config = get_ini_config()
     root = os.path.dirname(os.path.abspath(__file__))
     log_dir = os.path.join(root, config[envirovment]['LOG_FILE_NAME'])
 
-    handler = logging.FileHandler(log_dir)
-    handler.setLevel(log_level)
-
-    app.logger.addHandler(handler)
-    app.logger.setLevel(log_level)
+    logging.basicConfig(filename=log_dir,
+                level=logging.WARN, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
     #log configuration
 
     #mongodb configuration
@@ -75,8 +64,9 @@ def create_app(envirovment):
     #mongodb configuration
     
     bootstrap.init_app(app)
+
     with app.app_context():
-      videoLocalStorer.store_cameras()
+        CustomFlaskThread(name='store_cameras', target=videoLocalStorer.store_cameras).start()
 
     return app
 
