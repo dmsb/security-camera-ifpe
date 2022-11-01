@@ -8,25 +8,18 @@
 {% block content %}
     {{ super() }}
     <script>
-        $(function(){
-            $("input[type=checkbox]").change(function(){    
-                $(this).parent().find('input[type=hidden]').val((this.checked) ? true : false);
-            });
-        });
-
         function loadDisabledImage(camera, matrizSize) {
             console.log('loadDisabledImage')
-            fetch(`/disabled_camera/${matrizSize}`)
+            fetch(`/disabled_camera_image/${matrizSize}`)
                 .then(function (response) {
                     return response.text();
                 }).then(function (jsonText) {
                     const cameraJsonParsed = JSON.parse(camera)
-                    const select = cameraJsonParsed.specific_location + '-camera-view'
+                    const select = cameraJsonParsed._id + '-camera-view'
                     image = document.getElementById(select)
                     image.setAttribute('src' , jsonText)
                 });
         }
-
     </script>
     <header class="bg-header-container">
         <div class="container container-header">
@@ -55,7 +48,7 @@
                             {% if cameras_matrix[i][j][1].is_enabled %}
                             <img src="{{ url_for('security_camera_api_v1.video_feed', camera_mac_address=cameras_matrix[i][j][1].mac_address, camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
                             {% else %}
-                            <img id="{{cameras_matrix[i][j][1].specific_location}}-camera-view" />
+                            <img id="{{cameras_matrix[i][j][1]._id}}-camera-view" />
                             <script>
                                 loadDisabledImage('{{ cameras_matrix[i][j][1]|tojson }}', '{{cameras_matrix[i]|length}}')
                             </script>
@@ -100,28 +93,29 @@
           </div>
           <div class="modal-body">
             <form id="edit-camera" action="{{ url_for('security_camera_api_v1.update_camera') }}" method="post">
+                <input type="hidden" name="_id" bind="_id" />
                 <div class="row">
                     <div class="col-md-6">
                         <label for="mac-address" class="col-form-label">Endereco MAC:</label>
-                        <input type="text" class="form-control" name="mac_address" id="mac_address">
+                        <input type="text" class="form-control" bind="mac_address" name="mac_address">
                     </div>
                     <div class="col-md-6">
                         <label for="camera_status" class="col-form-label">Status:</label>
                         <div id="camera_status" class="form-check form-switch">
                             <label for="is_enabled" class="form-check-label">Habilitada / Desabilitada</label>
-                            <input type="checkbox" class="form-check-input" id="is_enabled">
-                            <input type="hidden" name="is_enabled" value=false/>
+                            <input type="checkbox" class="form-check-input" bind="is_enabled" >
+                            <input type="hidden" id="is_enabled" name="is_enabled"/>
                         </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <label for="brand" class="col-form-label">Marca:</label>
-                        <input type="text" class="form-control" name="brand" id="brand">
+                        <input type="text" class="form-control" bind="brand" name="brand">
                       </div>
                       <div class="col-md-6">
                         <label for="camera-model" class="col-form-label">Modelo:</label>
-                        <input type="text" class="form-control" name='model' id="model">
+                        <input type="text" class="form-control" bind="model" name='model'>
                       </div>
                 </div>
                 <div class="row">
@@ -129,13 +123,13 @@
                         <label for="network_stream_protocol" class="col-form-label">Protocolo:</label>
                         <div id='network_stream_protocol'>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="network_stream_protocol" id="rtsp" value="rtsp">
+                                <input class="form-check-input" type="radio" bind="network_stream_protocol_rtsp" name="network_stream_protocol" value="rtsp">
                                 <label class="form-check-label" for="rtsp">
                                 RSTP
                                 </label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="network_stream_protocol" id="http" value="http">
+                                <input class="form-check-input" type="radio" bind="network_stream_protocol_http" name="network_stream_protocol" value="http">
                                 <label class="form-check-label" for="http">
                                 HTTP
                                 </label>
@@ -144,39 +138,39 @@
                     </div>
                     <div class="col-md-6">
                         <label for="camera-port" class="col-form-label">Porta da camera:</label>
-                        <input type="text" class="form-control" id="port" name="port">
+                        <input type="text" class="form-control" bind="port" name="port">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <label for="company" class="col-form-label">Empresa:</label>
-                        <input type="text" class="form-control" id="company" name="company">
+                        <input type="text" class="form-control" bind="company" name="company">
                     </div>
                     <div class="col-md-6">
                         <label for="department" class="col-form-label">Departamento:</label>
-                        <input type="text" class="form-control" id="department" name="department">
+                        <input type="text" class="form-control" bind="department" name="department">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-12">
                         <label for="location" class="col-form-label">Localizacao:</label>
-                        <input type="text" class="form-control" id="location" name="location">
+                        <input type="text" class="form-control" bind="location" name="location">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-12">
                         <label for="specific-location" class="col-form-label">Detalhe da localizacao:</label>
-                        <input type="text" class="form-control" id="specific_location" name="specific_location">
+                        <input type="text" class="form-control" bind="specific_location" name="specific_location">
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <label for="camera-username" class="col-form-label">Usuario da camera:</label>
-                        <input type="text" class="form-control" id="username" name="username">
+                        <input type="text" class="form-control" bind="username" name="username">
                     </div>
                     <div class="col-md-6">
                         <label for="camera-password" class="col-form-label">Senha da camera:</label>
-                        <input type="text" class="form-control" id="password" name="password">
+                        <input type="text" class="form-control" bind="password" name="password">
                     </div>
                 </div>
             </form>
@@ -193,6 +187,10 @@
         var cameraDetail = document.getElementById('camera-detail')
 
         cameraDetail.addEventListener('show.bs.modal', function (event) {
+            
+            $("input[type=checkbox]").change(function(){
+                $(this).parent().find('input[type=hidden]').val((this.checked) ? true : false);
+            }); 
 
             const detailButton = event.relatedTarget
             const camera = detailButton.getAttribute('data-bs-camera')
@@ -200,14 +198,11 @@
 
             Object.keys(cameraJSONParsed).forEach((field) => {
                 let formField = null
-                if(field == 'network_stream_protocol') {
-                    formField = cameraDetail.querySelector('.modal-body #' + cameraJSONParsed[field])
-                } else {
-                    formField = cameraDetail.querySelector('.modal-body #' + field)
-                }
+                formField = cameraDetail.querySelector('input[bind="' + field + '"], input[bind="' + field + '_' +  cameraJSONParsed[field] +'"]')
+                
                 if(formField != null) {
                     formField.setAttribute('value', cameraJSONParsed[field])
-                    formField.setAttribute('checked', true === cameraJSONParsed[field])
+                    formField.checked = cameraJSONParsed[field]
                 }
             });
 

@@ -71,8 +71,8 @@ def video_feed(camera_mac_address, camera_ip, camera_matrix_size):
             return Response(stream_with_context(securityCameraServices.generate_frames_to_view(camera, camera_ip, camera_matrix_size)), mimetype='multipart/x-mixed-replace; boundary=frame')
     return redirect(url_for('security_camera_api_v1.login_get'))
 
-@security_camera_api_v1.route('/disabled_camera/<int:camera_matrix_size>')
-def disaled_camera(camera_matrix_size):
+@security_camera_api_v1.route('/disabled_camera_image/<int:camera_matrix_size>')
+def disabled_camera_image(camera_matrix_size):
     if 'username' in session:
         return securityCameraServices.generate_image_bytes(camera_matrix_size)
     return redirect(url_for('security_camera_api_v1.login_get'))

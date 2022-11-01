@@ -29,5 +29,5 @@ def get_camera_by_filter(filter):
 def get_cameras_by_filter(filter, fields):
     return list(db.camera.find(filter, fields))
 
-def update_cameras_by_mac_address(camera):
-    db.camera.update_one( { "mac_address": camera['mac_address'] },  { "$set": camera })
+def update_cameras_by_id(camera):
+    db.camera.update_one( { "_id": camera['_id'] },  { "$set": camera })
