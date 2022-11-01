@@ -65,8 +65,8 @@ def create_app(envirovment):
     
     bootstrap.init_app(app)
 
-    with app.app_context():
-        CustomFlaskThread(name='store_cameras', target=videoLocalStorer.store_cameras).start()
+    # with app.app_context():
+    #     CustomFlaskThread(name='store_cameras', target=videoLocalStorer.store_cameras).start()
 
     return app
 

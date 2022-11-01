@@ -1,4 +1,5 @@
-from flask import Blueprint, flash, request, Response, render_template, stream_with_context, redirect, url_for, session
+import os
+from flask import Blueprint, flash, g, jsonify, make_response, request, Response, render_template, send_from_directory, stream_with_context, redirect, url_for, session
 from helpers import emailSender
 from helpers import securityCameraServices
 from helpers import db
@@ -65,5 +66,20 @@ def cameras():
 @security_camera_api_v1.route('/video_feed/<string:camera_mac_address>/<string:camera_ip>/<int:camera_matrix_size>')
 def video_feed(camera_mac_address, camera_ip, camera_matrix_size):
     if 'username' in session:
-        return Response(stream_with_context(securityCameraServices.generate_frames_to_view(camera_mac_address, camera_ip, camera_matrix_size)), mimetype='multipart/x-mixed-replace; boundary=frame')
+        camera = db.get_camera_by_filter({'is_enabled':True, 'mac_address':camera_mac_address})
+        if camera != None :
+            return Response(stream_with_context(securityCameraServices.generate_frames_to_view(camera, camera_ip, camera_matrix_size)), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return redirect(url_for('security_camera_api_v1.login_get'))
+
+@security_camera_api_v1.route('/disabled_camera/<int:camera_matrix_size>')
+def disaled_camera(camera_matrix_size):
+    if 'username' in session:
+        return securityCameraServices.generate_image_bytes(camera_matrix_size)
+    return redirect(url_for('security_camera_api_v1.login_get'))
+
+@security_camera_api_v1.post('/update_camera')
+def update_camera():
+    if 'username' in session:
+        securityCameraServices.update_camera(request.form.to_dict())
+        return redirect(url_for('security_camera_api_v1.cameras'))
     return redirect(url_for('security_camera_api_v1.login_get'))

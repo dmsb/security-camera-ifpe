@@ -29,9 +29,9 @@ def build_video_capture(camera, ip):
     else:
         current_app.logger.warn('IP invalido para operacao de captura de video da camera >> %s' % (ip))
 
-def load_cameras():
+def load_cameras(filter, query_fields):
 
-    cameras = db.get_cameras_by_filter({'is_enabled':True})
+    cameras = db.get_cameras_by_filter(filter, query_fields)
         
     addresses = subprocess.check_output(['arp', '-a'])
     network_adds = addresses.decode('windows-1252').splitlines()

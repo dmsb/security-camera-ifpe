@@ -7,6 +7,27 @@
 {% endblock %}
 {% block content %}
     {{ super() }}
+    <script>
+        $(function(){
+            $("input[type=checkbox]").change(function(){    
+                $(this).parent().find('input[type=hidden]').val((this.checked) ? true : false);
+            });
+        });
+
+        function loadDisabledImage(camera, matrizSize) {
+            console.log('loadDisabledImage')
+            fetch(`/disabled_camera/${matrizSize}`)
+                .then(function (response) {
+                    return response.text();
+                }).then(function (jsonText) {
+                    const cameraJsonParsed = JSON.parse(camera)
+                    const select = cameraJsonParsed.specific_location + '-camera-view'
+                    image = document.getElementById(select)
+                    image.setAttribute('src' , jsonText)
+                });
+        }
+
+    </script>
     <header class="bg-header-container">
         <div class="container container-header">
             <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
@@ -25,29 +46,40 @@
         <div class="card">
             <h5 class="card-header">Cameras ativas ao vivo</h5>
             <div class="card-body">
-                {% if cameras_matrix %}
-                    {% for i in range(0, cameras_matrix|length) %}
-                    <div class="row">
-                        {% for j in range(0, cameras_matrix[i]|length) %}
-                        <div class="col camera-view">
-                            <div class="card">
-                                <img src="{{ url_for('security_camera_api_v1.video_feed', camera_mac_address=cameras_matrix[i][j][1].mac_address, camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
-                                <div class="card-body">
-                                    <ul class="list-group list-group-flush">
-                                        <li class="list-group-item">Departamento: {{ cameras_matrix[i][j][1].department }}</li>
-                                        <li class="list-group-item">Localizacao: {{ cameras_matrix[i][j][1].location }}</li>
-                                        <li class="list-group-item">Ponto: {{ cameras_matrix[i][j][1].specific_location }}</li>
-                                    </ul>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">{{ cameras_matrix[i][j][1].mac_address}}</small>
-                                    </div>
+            {% if cameras_matrix %}
+                {% for i in range(0, cameras_matrix|length) %}
+                <div class="row">
+                    {% for j in range(0, cameras_matrix[i]|length) %}
+                    <div class="col camera-view">
+                        <div class="card">
+                            {% if cameras_matrix[i][j][1].is_enabled %}
+                            <img src="{{ url_for('security_camera_api_v1.video_feed', camera_mac_address=cameras_matrix[i][j][1].mac_address, camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
+                            {% else %}
+                            <img id="{{cameras_matrix[i][j][1].specific_location}}-camera-view" />
+                            <script>
+                                loadDisabledImage('{{ cameras_matrix[i][j][1]|tojson }}', '{{cameras_matrix[i]|length}}')
+                            </script>
+                            {% endif %}
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">Departamento: {{ cameras_matrix[i][j][1].department }}</li>
+                                    <li class="list-group-item">Localizacao: {{ cameras_matrix[i][j][1].location }}</li>
+                                    <li class="list-group-item">Ponto: {{ cameras_matrix[i][j][1].specific_location }}</li>
+                                </ul>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">{{ cameras_matrix[i][j][1].mac_address}}</small>
+                                </div>
+                                <div class="edit-button">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#camera-detail" 
+                                    data-bs-camera='{{cameras_matrix[i][j][1]|tojson}}'>Configurar</button>
                                 </div>
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
                     {% endfor %}
-                {% endif %}
+                </div>
+                {% endfor %}
+            {% endif %}
                 <div class="row">
                     <div class="col camera-view">
                         <div class="card">
@@ -58,4 +90,130 @@
             </div>
         </div>
     </div>
+    
+    <div class="modal fade" id="camera-detail" tabindex="-1" aria-labelledby="camera-detail-label" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="camera-detail-label">Detalhes da camera</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="edit-camera" action="{{ url_for('security_camera_api_v1.update_camera') }}" method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="mac-address" class="col-form-label">Endereco MAC:</label>
+                        <input type="text" class="form-control" name="mac_address" id="mac_address">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="camera_status" class="col-form-label">Status:</label>
+                        <div id="camera_status" class="form-check form-switch">
+                            <label for="is_enabled" class="form-check-label">Habilitada / Desabilitada</label>
+                            <input type="checkbox" class="form-check-input" id="is_enabled">
+                            <input type="hidden" name="is_enabled" value=false/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="brand" class="col-form-label">Marca:</label>
+                        <input type="text" class="form-control" name="brand" id="brand">
+                      </div>
+                      <div class="col-md-6">
+                        <label for="camera-model" class="col-form-label">Modelo:</label>
+                        <input type="text" class="form-control" name='model' id="model">
+                      </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="network_stream_protocol" class="col-form-label">Protocolo:</label>
+                        <div id='network_stream_protocol'>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="network_stream_protocol" id="rtsp" value="rtsp">
+                                <label class="form-check-label" for="rtsp">
+                                RSTP
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="network_stream_protocol" id="http" value="http">
+                                <label class="form-check-label" for="http">
+                                HTTP
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="camera-port" class="col-form-label">Porta da camera:</label>
+                        <input type="text" class="form-control" id="port" name="port">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="company" class="col-form-label">Empresa:</label>
+                        <input type="text" class="form-control" id="company" name="company">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="department" class="col-form-label">Departamento:</label>
+                        <input type="text" class="form-control" id="department" name="department">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="location" class="col-form-label">Localizacao:</label>
+                        <input type="text" class="form-control" id="location" name="location">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="specific-location" class="col-form-label">Detalhe da localizacao:</label>
+                        <input type="text" class="form-control" id="specific_location" name="specific_location">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="camera-username" class="col-form-label">Usuario da camera:</label>
+                        <input type="text" class="form-control" id="username" name="username">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="camera-password" class="col-form-label">Senha da camera:</label>
+                        <input type="text" class="form-control" id="password" name="password">
+                    </div>
+                </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Deletar</button>
+            <button type="submit" class="btn btn-success" form="edit-camera">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+        var cameraDetail = document.getElementById('camera-detail')
+
+        cameraDetail.addEventListener('show.bs.modal', function (event) {
+
+            const detailButton = event.relatedTarget
+            const camera = detailButton.getAttribute('data-bs-camera')
+            const cameraJSONParsed = JSON.parse(camera)
+
+            Object.keys(cameraJSONParsed).forEach((field) => {
+                let formField = null
+                if(field == 'network_stream_protocol') {
+                    formField = cameraDetail.querySelector('.modal-body #' + cameraJSONParsed[field])
+                } else {
+                    formField = cameraDetail.querySelector('.modal-body #' + field)
+                }
+                if(formField != null) {
+                    formField.setAttribute('value', cameraJSONParsed[field])
+                    formField.setAttribute('checked', true === cameraJSONParsed[field])
+                }
+            });
+
+            const modalTitle = cameraDetail.querySelector('.modal-title')
+            modalTitle.textContent = 'Detalhes da Camera ' + cameraJSONParsed.mac_address
+
+        })
+    </script>
 {% endblock %}

@@ -21,3 +21,7 @@ body {
 .logout-btn {
   padding: 15px 0px 0px;
 }
+
+.edit-button {
+  float: right
+}

@@ -58,7 +58,7 @@ def __store_cameras_thread(camera_tuple):
     __get_frames_to_store(video_capture, camera)
 
 def store_cameras():
-    camera_ips_map = videoLocalLoader.load_cameras()
+    camera_ips_map = videoLocalLoader.load_cameras({'is_enabled':True}, {'_id':0})
     
     for camera_ip in camera_ips_map:
         ip = camera_ip[0]

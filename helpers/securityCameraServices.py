@@ -1,16 +1,39 @@
+import base64
 import cv2
 import logging
 import math
 from helpers import videoLocalLoader
 from helpers import db
 
-def generate_frames_to_view(camara_mac_address, camera_ip, camera_matrix_size):
-    camera = db.get_camera_by_filter({'is_enabled':True, 'mac_address':camara_mac_address})
+def update_camera(form_request_camera):
+    for field_entry in form_request_camera.keys():
+        field_value_from_form = form_request_camera[field_entry]
+        if field_value_from_form in ['true', 'false']:
+            form_request_camera[field_entry] = field_value_from_form.lower().capitalize() == "True"
+    db.update_cameras_by_mac_address(form_request_camera)
+
+def generate_frames_to_view(camera, camera_ip, camera_matrix_size):
     cap = videoLocalLoader.build_video_capture(camera, camera_ip)
     return gen_frames_by_ip_to_view(cap, camera_matrix_size)
 
+def generate_image_bytes(camera_matrix_size):
+    cap = cv2.VideoCapture('static/img/disabled-camera.jpg')
+    success, frame = cap.read()
+    if success:
+        try:
+            resized_frame = resize_img_from_matriz_size(frame, camera_matrix_size)
+            ret, buffer = cv2.imencode('.jpg', resized_frame)
+            resized_frame = buffer.tobytes()
+            resized_frame_text = base64.b64encode(buffer.tobytes()).decode('ASCII')
+            cap.release()
+            return 'data:image/jpeg;base64,' + resized_frame_text
+        except Exception as e:
+            cap.release()
+    else:
+        cap.release()
+    
 def build_camera_matrix():
-    camera_ips = videoLocalLoader.load_cameras()
+    camera_ips = videoLocalLoader.load_cameras({}, {'_id':0})
     return convert_1d_to_2d(camera_ips, get_cameras_matrix_size(camera_ips)) if camera_ips else None
 
 def convert_1d_to_2d(l, cols):
@@ -38,8 +61,8 @@ def gen_frames_by_ip_to_view(cap, camera_matrix_size):
                     b'Content-Type: image/jpeg\r\n\r\n' + resized_frame + b'\r\n')
             except Exception as e:
                 logging.error('Error getting frames to store >> %s', e)
-                logging.exception(e)
-                print(e)
+                cap.release()
                 pass    
         else:
+            cap.release()
             pass

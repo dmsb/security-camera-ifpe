@@ -26,5 +26,8 @@ def get_user_by_username_and_password(username, password):
 def get_camera_by_filter(filter):
     return db.camera.find_one(filter)
 
-def get_cameras_by_filter(filter):
-    return list(db.camera.find(filter))
+def get_cameras_by_filter(filter, fields):
+    return list(db.camera.find(filter, fields))
+
+def update_cameras_by_mac_address(camera):
+    db.camera.update_one( { "mac_address": camera['mac_address'] },  { "$set": camera })

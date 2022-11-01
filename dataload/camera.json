@@ -1,4 +1,5 @@
-[{
+[
+  {
     "department": "TADS",
     "location": "Laboratorio de informatica",
     "brand": "EZVIZ",
@@ -12,4 +13,20 @@
     "username": "admin",
     "port": "554",
     "company": "IFPE"
-  }]
+  },
+  {
+    "department": "TADS",
+    "location": "Laboratorio de informatica",
+    "brand": "EZVIZ",
+    "model": "C1",
+    "is_enabled": false,
+    "specific_location": "Entrada1",
+    "mac_address": "60-23-a4-b4-1b-8f",
+    "compression_format": "H.264",
+    "network_stream_protocol": "rtsp",
+    "password": "NUHIDF",
+    "username": "admin",
+    "port": "554",
+    "company": "IFPE"
+  }
+]
