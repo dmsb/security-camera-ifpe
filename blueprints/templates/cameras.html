@@ -197,9 +197,7 @@
             const cameraJSONParsed = JSON.parse(camera)
 
             Object.keys(cameraJSONParsed).forEach((field) => {
-                let formFieldsToUpdate = []
-                formFieldsToUpdate.push(cameraDetail.querySelector('input[bind="' + field + '"], input[bind="' + field + '_' +  cameraJSONParsed[field] +'"]'))
-                formFieldsToUpdate.push(cameraDetail.querySelector('input[type="hidden"][name="' + field + '"]'))
+                let formFieldsToUpdate = cameraDetail.querySelectorAll('input[bind="' + field + '"], input[bind="' + field + '_' +  cameraJSONParsed[field] +'"], input[type="hidden"][name="' + field + '"]')
                 formFieldsToUpdate.forEach((formField) => {
                     if(formField != null) {
                         formField.setAttribute('value', cameraJSONParsed[field])
