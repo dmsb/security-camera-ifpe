@@ -103,7 +103,7 @@
                         <label for="camera_status" class="col-form-label">Status:</label>
                         <div id="camera_status" class="form-check form-switch">
                             <label for="is_enabled" class="form-check-label">Habilitada / Desabilitada</label>
-                            <input type="checkbox" class="form-check-input" bind="is_enabled" >
+                            <input type="checkbox" class="form-check-input" bind="is_enabled">
                             <input type="hidden" id="is_enabled" name="is_enabled"/>
                         </div>
                     </div>
@@ -197,13 +197,16 @@
             const cameraJSONParsed = JSON.parse(camera)
 
             Object.keys(cameraJSONParsed).forEach((field) => {
-                let formField = null
-                formField = cameraDetail.querySelector('input[bind="' + field + '"], input[bind="' + field + '_' +  cameraJSONParsed[field] +'"]')
+                let formFieldsToUpdate = []
+                formFieldsToUpdate.push(cameraDetail.querySelector('input[bind="' + field + '"], input[bind="' + field + '_' +  cameraJSONParsed[field] +'"]'))
+                formFieldsToUpdate.push(cameraDetail.querySelector('input[type="hidden"][name="' + field + '"]'))
+                formFieldsToUpdate.forEach((formField) => {
+                    if(formField != null) {
+                        formField.setAttribute('value', cameraJSONParsed[field])
+                        formField.checked = cameraJSONParsed[field]
+                    }
+                })
                 
-                if(formField != null) {
-                    formField.setAttribute('value', cameraJSONParsed[field])
-                    formField.checked = cameraJSONParsed[field]
-                }
             });
 
             const modalTitle = cameraDetail.querySelector('.modal-title')
