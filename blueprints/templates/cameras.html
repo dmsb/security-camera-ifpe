@@ -15,7 +15,7 @@
                     return response.text();
                 }).then(function (jsonText) {
                     const cameraJsonParsed = JSON.parse(camera)
-                    const select = cameraJsonParsed._id + '-camera-view'
+                    const select = cameraJsonParsed._id + '-disabled-view'
                     image = document.getElementById(select)
                     image.setAttribute('src' , jsonText)
                 });
@@ -48,7 +48,7 @@
                             {% if cameras_matrix[i][j][1].is_enabled %}
                             <img src="{{ url_for('security_camera_api_v1.video_feed', camera_mac_address=cameras_matrix[i][j][1].mac_address, camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
                             {% else %}
-                            <img id="{{cameras_matrix[i][j][1]._id}}-camera-view" />
+                            <img id="{{cameras_matrix[i][j][1]._id}}-disabled-view" />
                             <script>
                                 loadDisabledImage('{{ cameras_matrix[i][j][1]|tojson }}', '{{cameras_matrix[i]|length}}')
                             </script>

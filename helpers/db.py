@@ -31,3 +31,6 @@ def get_cameras_by_filter(filter, fields):
 
 def update_cameras_by_id(camera):
     db.camera.update_one( { "_id": camera['_id'] },  { "$set": camera })
+
+def update_user_by_id(user):
+    db.user.update_one( { "_id": user['_id'] },  { "$set": user })

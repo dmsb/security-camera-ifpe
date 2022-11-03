@@ -10,3 +10,5 @@ google-api-python-client==2.62.0
 google-cloud-bigquery==3.3.2
 google-auth-oauthlib==0.5.3
 flask-cors==3.0.10
+flask-mailman==0.3.0
+itsdangerous==2.0.1

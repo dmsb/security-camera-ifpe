@@ -50,14 +50,23 @@ def create_app(envirovment):
     app.secret_key = generate_secret_key()
     #Set the secret key to some random bytes
 
-    #log configuration
     config = get_ini_config()
     root = os.path.dirname(os.path.abspath(__file__))
-    log_dir = os.path.join(root, config[envirovment]['LOG_FILE_NAME'])
 
+    #log configuration
+    log_dir = os.path.join(root, config[envirovment]['LOG_FILE_NAME'])
     logging.basicConfig(filename=log_dir,
                 level=logging.WARN, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
     #log configuration
+
+    #email config
+    app.config['MAIL_SERVER']='smtp.gmail.com'
+    app.config['MAIL_PORT'] = 465
+    app.config['MAIL_DEFAULT_SENDER'] = config['GENERAL']['SERVER_EMAIL_ADDRESS']
+    app.config['MAIL_USERNAME'] = config['GENERAL']['SERVER_EMAIL_ADDRESS']
+    app.config['MAIL_PASSWORD'] = config['GENERAL']['SERVER_EMAIL_PASSWORD']
+    app.config['MAIL_USE_TLS'] = False
+    app.config['MAIL_USE_SSL'] = True
 
     #mongodb configuration
     app.config["MONGO_URI"] = config[envirovment]['DB_URI']

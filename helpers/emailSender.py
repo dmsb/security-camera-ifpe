@@ -1,22 +1,26 @@
-import configparser
-import os
-import smtplib
-from email.message import EmailMessage
-from flask import current_app
+from flask import current_app, url_for
+from helpers import db
+from flask_mailman import Mail
+from itsdangerous import TimedJSONWebSignatureSerializer
 
-config = configparser.ConfigParser()
-config.read(os.path.abspath(os.path.join(".ini")))
+def send_password_recovery_to_email(username):
+    try:
+        mail = Mail(current_app)
+        user = db.get_user_by_username(username)
+        if(user):
+            mail = Mail(current_app)
+            mail.content_subtype = 'html'
+            mail.content_subtype = 'html'
 
-def send_password_recovery_to_email(user_email, current_password):
-    
-    msg = EmailMessage()
-    msg['Subject'] = 'Email de recuperacao de senha Security Camera - IFPE'
-    msg['From'] = config['GENERAL']['SERVER_EMAIL_ADDRESS']
-    msg['To'] = user_email
-    msg.set_content('Sua senha cadastrada: ' + current_password)
-
-    # Send the email via our own SMTP server.
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login(config['GENERAL']['SERVER_EMAIL_ADDRESS'], config['GENERAL']['SERVER_EMAIL_PASSWORD']) 
-        smtp.send_message(msg)
-    current_app.logger.info('E-mail de recuperacao enviado para >> %s', user_email)
+            signatureSerializer = TimedJSONWebSignatureSerializer(current_app.secret_key, 60)
+            token = signatureSerializer.dumps({'username': str(user['username'])}).decode('utf-8')
+            mail.send_mail(
+                subject='Patrimonio+Seguro: E-mail de redefinicao de senha',
+                message='',
+                html_message="<p>Link de redifinicao de senha: " + url_for('security_camera_api_v1.update_password_get',
+                    _external = True, token=token, username=username) +  "</p>",
+                recipient_list=[user['username']])
+            return True
+        return False
+    except Exception as e:
+        return False

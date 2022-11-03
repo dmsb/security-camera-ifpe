@@ -43,11 +43,9 @@ def password_recovery_get():
 @security_camera_api_v1.post('/password_recovery_post')
 def password_recovery_post():
     username = request.form['email']
-    user = db.get_user_by_username(username)
-    if user:
-        current_app.logger.info('Enviado e-mail de recuperacao de senha para o usuario: %s', user['username'])
+    recovery_email_success = emailSender.send_password_recovery_to_email(username)
+    if recovery_email_success:
         flash('Por favor, verifique na caixa de entrada o e-mail de recuperacao de senha.', 'success')
-        emailSender.send_password_recovery_to_email(username, user['password'])
         return redirect(url_for('security_camera_api_v1.login_get'))
     else:
         flash('E-mail nao encontrado.', 'warning')
@@ -68,7 +66,8 @@ def video_feed(camera_mac_address, camera_ip, camera_matrix_size):
     if 'username' in session:
         camera = db.get_camera_by_filter({'is_enabled':True, 'mac_address':camera_mac_address})
         if camera != None :
-            return Response(stream_with_context(securityCameraServices.generate_frames_to_view(camera, camera_ip, camera_matrix_size)), mimetype='multipart/x-mixed-replace; boundary=frame')
+            current_frame = securityCameraServices.generate_frames_to_view(camera, camera_ip, camera_matrix_size)
+            return Response(stream_with_context(current_frame), mimetype='multipart/x-mixed-replace; boundary=frame')
     return redirect(url_for('security_camera_api_v1.login_get'))
 
 @security_camera_api_v1.route('/disabled_camera_image/<int:camera_matrix_size>')
@@ -80,6 +79,22 @@ def disabled_camera_image(camera_matrix_size):
 @security_camera_api_v1.post('/update_camera')
 def update_camera():
     if 'username' in session:
-        securityCameraServices.update_camera(request.form.to_dict())
+        if securityCameraServices.update_camera(request.form.to_dict()):
+            flash('Camera atualizada com sucesso', 'success')
+        else:
+            flash('Aconteceu um erro inesperado', 'danger')
         return redirect(url_for('security_camera_api_v1.cameras'))
+    return redirect(url_for('security_camera_api_v1.login_get'))
+
+@security_camera_api_v1.get('/update_password')
+def update_password_get():
+    request_params = request.args
+    return render_template('passwordChange.html', token=request_params['token'], username=request_params['username'])
+
+@security_camera_api_v1.post('/update_password')
+def update_password_post():
+    if(securityCameraServices.update_user_password(request.form.to_dict())):
+        flash('Senha atualizada com sucesso', 'success')
+    else:
+        flash('Aconteceu um erro inesperado', 'danger')
     return redirect(url_for('security_camera_api_v1.login_get'))
