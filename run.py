@@ -1,5 +1,5 @@
-from appFactory import create_app
-from dataLoader import load_initial_data
+from src.appFactory import create_app
+from dataload.dataLoader import load_initial_data
 
 if __name__ == "__main__":
    app = create_app('DEV')

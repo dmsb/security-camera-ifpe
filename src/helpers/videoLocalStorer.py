@@ -2,17 +2,17 @@ from datetime import datetime, timedelta
 import threading
 import cv2
 import time
-from flaskThread import CustomFlaskThread
-from helpers import videoLocalLoader
-from helpers.googleDriveIntegrator import upload_videos_to_google_drive
-from helpers.pythonAuxiliary import get_ini_config
+from src.flaskThread import CustomFlaskThread
+from src.helpers import videoLocalLoader
+from src.helpers.googleDriveIntegrator import upload_videos_to_google_drive
+from configHelper import get_ini_config
 from flask import current_app
 
 TIME_PATTERN = '%d_%m_%Y__%H_%M_%S'
 
 def __get_frames_to_store(video_capture, camera):
     
-    RECORDING_TIME_IN_SECONDS = 1800
+    RECORDING_TIME_IN_SECONDS = 60
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
 
     frame_width = int(video_capture.get(3))

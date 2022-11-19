@@ -20,6 +20,14 @@
                     image.setAttribute('src' , jsonText)
                 });
         }
+        function deleteCamera() {
+            fetch(`/delete_camera/${selectedCameraJSONParsed._id}`)
+                .then(function (response) {
+                    return response.text();
+                }).then(function (jsonText) {
+                    location.reload();
+                });
+        }
     </script>
     <header class="bg-header-container">
         <div class="container container-header">
@@ -68,7 +76,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> 
                     {% endfor %}
                 </div>
                 {% endfor %}
@@ -83,12 +91,12 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal fade" id="camera-detail" tabindex="-1" aria-labelledby="camera-detail-label" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="camera-detail-label">Detalhes da camera</h5>
+            <h5 class="modal-title" id="camera-detail-label">Camera</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -165,6 +173,16 @@
                 </div>
                 <div class="row">
                     <div class="col-md-6">
+                        <label for="compression_format" class="col-form-label">Usuario da camera:</label>
+                        <input type="text" class="form-control" bind="compression_format" name="compression_format">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="camera-password" class="col-form-label">Senha da camera:</label>
+                        <input type="text" class="form-control" bind="compression_format" name="compression_format">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
                         <label for="camera-username" class="col-form-label">Usuario da camera:</label>
                         <input type="text" class="form-control" bind="username" name="username">
                     </div>
@@ -176,15 +194,40 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Deletar</button>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#camera-delete">Deletar</button>
             <button type="submit" class="btn btn-success" form="edit-camera">Salvar</button>
           </div>
         </div>
       </div>
     </div>
 
+    <div class="modal fade" id="camera-delete" tabindex="-1" aria-labelledby="camera-delete-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="camera-detail-label">Deseja remover esta camera</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" data-bs-target="#camera-delete">Cancelar</button>
+                    <button type="submit" class="btn btn-success" onclick="deleteCamera(selectedCameraJSONParsed)">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script type="text/javascript">
+
+        var deleteCameraComponent = document.getElementById('camera-delete');
+        
+        deleteCameraComponent.addEventListener('show.bs.modal', function (event) {
+            $("#camera-detail").modal("hide");
+        });
+
         var cameraDetail = document.getElementById('camera-detail')
+        var selectedCameraJSONParsed = null;
 
         cameraDetail.addEventListener('show.bs.modal', function (event) {
             
@@ -194,22 +237,21 @@
 
             const detailButton = event.relatedTarget
             const camera = detailButton.getAttribute('data-bs-camera')
-            const cameraJSONParsed = JSON.parse(camera)
+            selectedCameraJSONParsed = JSON.parse(camera)
 
-            Object.keys(cameraJSONParsed).forEach((field) => {
-                let formFieldsToUpdate = cameraDetail.querySelectorAll('input[bind="' + field + '"], input[bind="' + field + '_' +  cameraJSONParsed[field] +'"], input[type="hidden"][name="' + field + '"]')
+            Object.keys(selectedCameraJSONParsed).forEach((field) => {
+                let formFieldsToUpdate = cameraDetail.querySelectorAll('input[bind="' + field + '"], input[bind="' + field + '_' +  selectedCameraJSONParsed[field] +'"], input[type="hidden"][name="' + field + '"]')
                 formFieldsToUpdate.forEach((formField) => {
                     if(formField != null) {
-                        formField.setAttribute('value', cameraJSONParsed[field])
-                        formField.checked = cameraJSONParsed[field]
+                        formField.setAttribute('value', selectedCameraJSONParsed[field])
+                        formField.checked = selectedCameraJSONParsed[field]
                     }
                 })
                 
             });
 
             const modalTitle = cameraDetail.querySelector('.modal-title')
-            modalTitle.textContent = 'Detalhes da Camera ' + cameraJSONParsed.mac_address
-
+            modalTitle.textContent = 'Detalhes da Camera ' + selectedCameraJSONParsed.mac_address
         })
     </script>
 {% endblock %}

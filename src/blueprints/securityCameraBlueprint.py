@@ -1,8 +1,7 @@
-import os
-from flask import Blueprint, flash, g, jsonify, make_response, request, Response, render_template, send_from_directory, stream_with_context, redirect, url_for, session
-from helpers import emailSender
-from helpers import securityCameraServices
-from helpers import db
+from flask import Blueprint, flash, request, Response, render_template, stream_with_context, redirect, url_for, session
+from src.helpers import emailSender
+from src.helpers import securityCameraServices
+from src.helpers import db
 from flask import current_app
 from flask_cors import CORS
 
@@ -97,4 +96,24 @@ def update_password_post():
         flash('Senha atualizada com sucesso', 'success')
     else:
         flash('Aconteceu um erro inesperado', 'danger')
+    return redirect(url_for('security_camera_api_v1.login_get'))
+
+@security_camera_api_v1.post('/create_camera')
+def create_camera():
+    if 'username' in session:
+        if(securityCameraServices.create_camera(request.form.to_dict())):
+            flash('Camera criada com sucesso', 'success')
+        else:
+            flash('Aconteceu um erro inesperado', 'danger')
+        return redirect(url_for('security_camera_api_v1.cameras'))
+    return redirect(url_for('security_camera_api_v1.login_get'))
+
+@security_camera_api_v1.route('/delete_camera/<string:camera_id>')
+def delete_camera(camera_id):
+    if 'username' in session:
+        if(securityCameraServices.delete_camera_by_id(camera_id)):
+            flash('Camera removida com sucesso', 'success')
+        else:
+            flash('Aconteceu um erro inesperado', 'danger')
+        return redirect(url_for('security_camera_api_v1.cameras'))
     return redirect(url_for('security_camera_api_v1.login_get'))

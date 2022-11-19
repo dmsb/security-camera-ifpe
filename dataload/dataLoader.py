@@ -25,10 +25,10 @@ def load_initial_data():
    user_collection.delete_many({})
    camera_collection.delete_many({})
 
-   with open('dataload/user.json') as file:
+   with open('dataload/mongo/user.json') as file:
       load_data(user_collection, json.load(file))
 
-   with open('dataload/camera.json') as file:
+   with open('dataload/mongo/camera.json') as file:
       load_data(camera_collection, json.load(file))
 
 

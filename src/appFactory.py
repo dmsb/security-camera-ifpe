@@ -9,11 +9,12 @@ from flask_cors import CORS
 from bson import json_util, ObjectId
 from datetime import datetime
 from flask_bootstrap import Bootstrap5
-from blueprints.securityCameraBlueprint import security_camera_api_v1
-from helpers import videoLocalStorer
-from flaskThread import CustomFlaskThread
+from src.blueprints.securityCameraBlueprint import security_camera_api_v1
+from src.helpers import videoLocalStorer
+from src.flaskThread import CustomFlaskThread
+from configHelper import get_ini_config
+
 bootstrap = Bootstrap5()
-from helpers.pythonAuxiliary import get_ini_config
 
 class MongoJsonEncoder(JSONEncoder):
     def default(self, obj):
@@ -74,8 +75,8 @@ def create_app(envirovment):
     
     bootstrap.init_app(app)
 
-    # with app.app_context():
-    #     CustomFlaskThread(name='store_cameras', target=videoLocalStorer.store_cameras).start()
+    with app.app_context():
+        CustomFlaskThread(name='store_cameras', target=videoLocalStorer.store_cameras).start()
 
     return app
 

@@ -1,5 +1,5 @@
 from flask import current_app, url_for
-from helpers import db
+from src.helpers import db
 from flask_mailman import Mail
 from itsdangerous import TimedJSONWebSignatureSerializer
 
@@ -12,7 +12,7 @@ def send_password_recovery_to_email(username):
             mail.content_subtype = 'html'
             mail.content_subtype = 'html'
 
-            signatureSerializer = TimedJSONWebSignatureSerializer(current_app.secret_key, 60)
+            signatureSerializer = TimedJSONWebSignatureSerializer(current_app.secret_key, 1800)
             token = signatureSerializer.dumps({'username': str(user['username'])}).decode('utf-8')
             mail.send_mail(
                 subject='Patrimonio+Seguro: E-mail de redefinicao de senha',

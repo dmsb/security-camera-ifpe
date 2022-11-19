@@ -3,7 +3,7 @@ import subprocess
 import re
 import cv2
 from flask import current_app
-from helpers import db
+from src.helpers import db
 
 IP_VALIDATOR_REGEX  = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$"
 

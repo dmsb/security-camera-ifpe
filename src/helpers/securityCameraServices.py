@@ -3,12 +3,20 @@ import hashlib
 from bson import ObjectId
 import cv2
 import math
-
 from flask import current_app
-from helpers import videoLocalLoader
-from helpers import db
-from helpers.pythonAuxiliary import get_ini_config
+from src.helpers import videoLocalLoader
+from src.helpers import db
+from configHelper import get_ini_config
 from itsdangerous import TimedJSONWebSignatureSerializer
+
+def delete_camera_by_id(camera_id):
+    try: 
+        db.delete_camera({'_id': ObjectId(camera_id)})
+        return True
+    except Exception as e:
+        current_app.logger.error('Error to delete camera >> %s >> %s' % (camera_id, e))
+    return False
+
 
 def update_user_password(form_request_user):
     try:
@@ -24,20 +32,35 @@ def update_user_password(form_request_user):
             db.update_user_by_id(user)
             return True
     except Exception as e:
-        current_app.logger.error('Error to update user password >> %s >> %s' % (e, form_request_user))
+        current_app.logger.error('Error to update user password >> %s >> %s' % (form_request_user, e))
         return False
-    
+
+def __build_camera_from_form_data(form_request_camera):
+    for field_entry in form_request_camera.keys():
+        field_value_from_form = form_request_camera[field_entry]
+        if field_value_from_form in ['true', 'false']:
+            form_request_camera[field_entry] = field_value_from_form.lower().capitalize() == "True"
+    return form_request_camera
+
 def update_camera(form_request_camera):
     try:
+        form_request_camera = __build_camera_from_form_data(form_request_camera)
         form_request_camera['_id'] = ObjectId(form_request_camera['_id'])
-        for field_entry in form_request_camera.keys():
-            field_value_from_form = form_request_camera[field_entry]
-            if field_value_from_form in ['true', 'false']:
-                form_request_camera[field_entry] = field_value_from_form.lower().capitalize() == "True"
         db.update_cameras_by_id(form_request_camera)
         return True
     except Exception as e:
-        current_app.logger.error('Error to update camera >> %s >> %s' % (e, form_request_camera))
+        current_app.logger.error('Error to update camera >> %s >> %s' % (form_request_camera, e))
+        return False
+
+def create_camera(form_request_camera):
+    try:
+        form_request_camera = __build_camera_from_form_data(form_request_camera)
+        form_request_camera['compression_format'] = 'H.264'
+        form_request_camera['port'] = '554'
+        db.create_camera(form_request_camera)
+        return True
+    except Exception as e:
+        current_app.logger.error('Error to create camera >> %s >> %s' % (form_request_camera, e))
         return False
 
 def generate_frames_to_view(camera, camera_ip, camera_matrix_size):
@@ -45,7 +68,7 @@ def generate_frames_to_view(camera, camera_ip, camera_matrix_size):
     return gen_frames_by_ip_to_view(cap, camera_matrix_size)
 
 def generate_image_bytes(camera_matrix_size):
-    cap = cv2.VideoCapture('static/img/disabled-camera.jpg')
+    cap = cv2.VideoCapture('src/static/img/disabled-camera.jpg')
     success, frame = cap.read()
     if success:
         try:
