@@ -31,11 +31,8 @@ def get_cameras_by_filter(filter, fields):
 def update_user_by_id(user):
     db.user.update_one( { "_id": user['_id'] },  { "$set": user })
 
-def update_cameras_by_id(camera):
-    db.camera.update_one( { "_id": camera['_id'] },  { "$set": camera })
-
-def create_camera(camera):
-    db.camera.insert_one(camera)
+def upsert_cameras_by_id(camera):
+    db.camera.update_one( { "mac_address": camera['mac_address'] },  { "$set": camera }, upsert=True)
 
 def delete_camera(filter):
     db.camera.delete_one(filter)

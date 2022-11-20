@@ -38,9 +38,11 @@ def load_cameras(filter, query_fields):
     cameras_map = []
 
     for camera in cameras:
+        network_ip = None
         for network_map_item in network_adds:
             if len(network_map_item) > 0 and network_map_item.split()[1] == camera['mac_address']:
-                cameras_map.append((network_map_item.split()[0], camera))
+                network_ip = network_map_item.split()[0]
                 break
+        cameras_map.append((network_ip, camera))
 
     return cameras_map

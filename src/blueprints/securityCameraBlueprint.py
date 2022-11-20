@@ -75,10 +75,10 @@ def disabled_camera_image(camera_matrix_size):
         return securityCameraServices.generate_image_bytes(camera_matrix_size)
     return redirect(url_for('security_camera_api_v1.login_get'))
 
-@security_camera_api_v1.post('/update_camera')
-def update_camera():
+@security_camera_api_v1.post('/upsert_camera')
+def upsert_camera():
     if 'username' in session:
-        if securityCameraServices.update_camera(request.form.to_dict()):
+        if securityCameraServices.upsert_camera(request.form.to_dict()):
             flash('Camera atualizada com sucesso', 'success')
         else:
             flash('Aconteceu um erro inesperado', 'danger')
@@ -96,16 +96,6 @@ def update_password_post():
         flash('Senha atualizada com sucesso', 'success')
     else:
         flash('Aconteceu um erro inesperado', 'danger')
-    return redirect(url_for('security_camera_api_v1.login_get'))
-
-@security_camera_api_v1.post('/create_camera')
-def create_camera():
-    if 'username' in session:
-        if(securityCameraServices.create_camera(request.form.to_dict())):
-            flash('Camera criada com sucesso', 'success')
-        else:
-            flash('Aconteceu um erro inesperado', 'danger')
-        return redirect(url_for('security_camera_api_v1.cameras'))
     return redirect(url_for('security_camera_api_v1.login_get'))
 
 @security_camera_api_v1.route('/delete_camera/<string:camera_id>')

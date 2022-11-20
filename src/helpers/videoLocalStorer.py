@@ -65,5 +65,5 @@ def store_cameras():
         camera = camera_ip[1]  
         camera_tuple = (ip, camera)
         
-        if not any(current_thread.name == 'camera_ip_' + ip for current_thread in threading.enumerate()):
+        if ip != None and not any(current_thread.name == 'camera_ip_' + ip for current_thread in threading.enumerate()):
             CustomFlaskThread(name='camera_ip_' + ip, target=__store_cameras_thread, args=(camera_tuple,)).start()

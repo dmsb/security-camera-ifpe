@@ -44,8 +44,10 @@
         </div>
     </header>
     <div class="container container-cameras-view">
+        <button type="button" class="btn btn-success mb-2 mt-2" data-bs-toggle="modal" 
+            data-bs-target="#camera-detail">Cadastrar nova camera</button>
         <div class="card">
-            <h5 class="card-header">Cameras ativas ao vivo</h5>
+            <h5 class="card-header">Cameras cadastradas</h5>
             <div class="card-body">
             {% if cameras_matrix %}
                 {% for i in range(0, cameras_matrix|length) %}
@@ -53,7 +55,7 @@
                     {% for j in range(0, cameras_matrix[i]|length) %}
                     <div class="col camera-view">
                         <div class="card">
-                            {% if cameras_matrix[i][j][1].is_enabled %}
+                            {% if cameras_matrix[i][j][1].is_enabled and cameras_matrix[i][j][0] != None %}
                             <img src="{{ url_for('security_camera_api_v1.video_feed', camera_mac_address=cameras_matrix[i][j][1].mac_address, camera_ip=cameras_matrix[i][j][0], camera_matrix_size=cameras_matrix[i]|length) }}" />
                             {% else %}
                             <img id="{{cameras_matrix[i][j][1]._id}}-disabled-view" />
@@ -71,7 +73,7 @@
                                     <small class="text-muted">{{ cameras_matrix[i][j][1].mac_address}}</small>
                                 </div>
                                 <div class="edit-button">
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#camera-detail" 
+                                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#camera-detail" 
                                     data-bs-camera='{{cameras_matrix[i][j][1]|tojson}}'>Configurar</button>
                                 </div>
                             </div>
@@ -100,12 +102,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form id="edit-camera" action="{{ url_for('security_camera_api_v1.update_camera') }}" method="post">
+            <form id="upsert-camera" action="{{ url_for('security_camera_api_v1.upsert_camera') }}" method="post">
                 <input type="hidden" name="_id" bind="_id" />
                 <div class="row">
                     <div class="col-md-6">
                         <label for="mac-address" class="col-form-label">Endereco MAC:</label>
-                        <input type="text" class="form-control" bind="mac_address" name="mac_address">
+                        <input type="text" class="form-control" bind="mac_address" name="mac_address" required>
                     </div>
                     <div class="col-md-6">
                         <label for="camera_status" class="col-form-label">Status:</label>
@@ -131,13 +133,13 @@
                         <label for="network_stream_protocol" class="col-form-label">Protocolo:</label>
                         <div id='network_stream_protocol'>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" bind="network_stream_protocol_rtsp" name="network_stream_protocol" value="rtsp">
+                                <input class="form-check-input" id="rtsp_radio" type="radio" bind="network_stream_protocol_rtsp" name="network_stream_protocol" value="rtsp">
                                 <label class="form-check-label" for="rtsp">
-                                RSTP
+                                RTSP
                                 </label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" bind="network_stream_protocol_http" name="network_stream_protocol" value="http">
+                                <input class="form-check-input" id="http_radio" type="radio" bind="network_stream_protocol_http" name="network_stream_protocol" value="http">
                                 <label class="form-check-label" for="http">
                                 HTTP
                                 </label>
@@ -146,7 +148,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="camera-port" class="col-form-label">Porta da camera:</label>
-                        <input type="text" class="form-control" bind="port" name="port">
+                        <input type="text" class="form-control" bind="port" name="port" required>
                     </div>
                 </div>
                 <div class="row">
@@ -172,30 +174,26 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6">
-                        <label for="compression_format" class="col-form-label">Usuario da camera:</label>
-                        <input type="text" class="form-control" bind="compression_format" name="compression_format">
-                    </div>
-                    <div class="col-md-6">
-                        <label for="camera-password" class="col-form-label">Senha da camera:</label>
-                        <input type="text" class="form-control" bind="compression_format" name="compression_format">
+                    <div class="col-md-12">
+                        <label for="compression_format" class="col-form-label">Formato de compressao:</label>
+                        <input type="text" class="form-control" bind="compression_format" name="compression_format" required>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
                         <label for="camera-username" class="col-form-label">Usuario da camera:</label>
-                        <input type="text" class="form-control" bind="username" name="username">
+                        <input type="text" class="form-control" bind="username" name="username" required>
                     </div>
                     <div class="col-md-6">
                         <label for="camera-password" class="col-form-label">Senha da camera:</label>
-                        <input type="text" class="form-control" bind="password" name="password">
+                        <input type="text" class="form-control" bind="password" name="password" required>
                     </div>
                 </div>
             </form>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#camera-delete">Deletar</button>
-            <button type="submit" class="btn btn-success" form="edit-camera">Salvar</button>
+            <button type="submit" class="btn btn-success" form="upsert-camera">Salvar</button>
           </div>
         </div>
       </div>
@@ -205,7 +203,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="camera-detail-label">Deseja remover esta camera</h5>
+                    <h5 class="modal-title" id="camera-detail-label">Deseja remover esta camera?</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -221,12 +219,12 @@
     <script type="text/javascript">
 
         var deleteCameraComponent = document.getElementById('camera-delete');
-        
+     
         deleteCameraComponent.addEventListener('show.bs.modal', function (event) {
             $("#camera-detail").modal("hide");
         });
 
-        var cameraDetail = document.getElementById('camera-detail')
+        var cameraDetail = document.getElementById('camera-detail');
         var selectedCameraJSONParsed = null;
 
         cameraDetail.addEventListener('show.bs.modal', function (event) {
@@ -235,23 +233,48 @@
                 $(this).parent().find('input[type=hidden]').val((this.checked) ? true : false);
             }); 
 
-            const detailButton = event.relatedTarget
-            const camera = detailButton.getAttribute('data-bs-camera')
-            selectedCameraJSONParsed = JSON.parse(camera)
+            const detailButton = event.relatedTarget;
+            const camera = detailButton.getAttribute('data-bs-camera');
+            const modalTitle = cameraDetail.querySelector('.modal-title');
+            if(camera) {
+                selectedCameraJSONParsed = JSON.parse(camera);
+                Object.keys(selectedCameraJSONParsed).forEach((field) => {
+                    let formFieldsToUpdate = cameraDetail.querySelectorAll('input[bind="' + 
+                    field + '"], input[bind="' + field + '_' +  selectedCameraJSONParsed[field] +
+                    '"], input[type="hidden"][name="' + field + '"]');
+                    formFieldsToUpdate.forEach((formField) => {
+                        if(formField != null) {
+                            formField.setAttribute('value', selectedCameraJSONParsed[field]);
+                            formField.checked = selectedCameraJSONParsed[field];
+                        }
+                    })
+                    
+                });
+                modalTitle.textContent = 'Detalhes da Camera ' + selectedCameraJSONParsed.mac_address;
+            } else {
+                $('#camera-detail')
+                    .find("input[id=_id]")
+                        .removeProp("value")
+                        .end()
+                    .find("input[type=checkbox], input[type=radio], input[type=hidden], input[type=text]")
+                        .removeProp("checked")
+                        .end()
+                    .find("input[type=checkbox], input[type=hidden], input[type=text]")
+                        .prop("value", null)
+                        .end()
+                    .find("input[id=is_enabled]")
+                        .prop("value", false)
+                        .end()
+                    .find("input[id=rtsp_radio]")
+                        .prop("checked", true)
+                        .end();
 
-            Object.keys(selectedCameraJSONParsed).forEach((field) => {
-                let formFieldsToUpdate = cameraDetail.querySelectorAll('input[bind="' + field + '"], input[bind="' + field + '_' +  selectedCameraJSONParsed[field] +'"], input[type="hidden"][name="' + field + '"]')
-                formFieldsToUpdate.forEach((formField) => {
-                    if(formField != null) {
-                        formField.setAttribute('value', selectedCameraJSONParsed[field])
-                        formField.checked = selectedCameraJSONParsed[field]
-                    }
-                })
-                
-            });
+                modalTitle.textContent = 'Nova Camera';
+            }
+        });
 
-            const modalTitle = cameraDetail.querySelector('.modal-title')
-            modalTitle.textContent = 'Detalhes da Camera ' + selectedCameraJSONParsed.mac_address
+        $('#camera-detail').on('hidden.bs.modal', function () {
+            $(this).find('form').trigger("reset");
         })
     </script>
 {% endblock %}

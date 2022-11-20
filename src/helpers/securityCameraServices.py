@@ -42,25 +42,17 @@ def __build_camera_from_form_data(form_request_camera):
             form_request_camera[field_entry] = field_value_from_form.lower().capitalize() == "True"
     return form_request_camera
 
-def update_camera(form_request_camera):
+def upsert_camera(form_request_camera):
     try:
         form_request_camera = __build_camera_from_form_data(form_request_camera)
-        form_request_camera['_id'] = ObjectId(form_request_camera['_id'])
-        db.update_cameras_by_id(form_request_camera)
+        if form_request_camera['_id'] != None and ObjectId.is_valid(form_request_camera['_id']):
+            form_request_camera['_id'] = ObjectId(form_request_camera['_id'])
+        else:
+            del form_request_camera['_id']
+        db.upsert_cameras_by_id(form_request_camera)
         return True
     except Exception as e:
         current_app.logger.error('Error to update camera >> %s >> %s' % (form_request_camera, e))
-        return False
-
-def create_camera(form_request_camera):
-    try:
-        form_request_camera = __build_camera_from_form_data(form_request_camera)
-        form_request_camera['compression_format'] = 'H.264'
-        form_request_camera['port'] = '554'
-        db.create_camera(form_request_camera)
-        return True
-    except Exception as e:
-        current_app.logger.error('Error to create camera >> %s >> %s' % (form_request_camera, e))
         return False
 
 def generate_frames_to_view(camera, camera_ip, camera_matrix_size):
