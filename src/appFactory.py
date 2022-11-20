@@ -10,8 +10,6 @@ from bson import json_util, ObjectId
 from datetime import datetime
 from flask_bootstrap import Bootstrap5
 from src.blueprints.securityCameraBlueprint import security_camera_api_v1
-from src.helpers import videoLocalStorer
-from src.flaskThread import CustomFlaskThread
 from configHelper import get_ini_config
 
 bootstrap = Bootstrap5()
@@ -74,9 +72,6 @@ def create_app(envirovment):
     #mongodb configuration
     
     bootstrap.init_app(app)
-
-    # with app.app_context():
-    #     CustomFlaskThread(name='store_cameras', target=videoLocalStorer.store_cameras).start()
 
     return app
 

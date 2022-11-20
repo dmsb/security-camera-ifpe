@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import threading
+from bson import ObjectId
 import cv2
 import time
 from src.flaskThread import CustomFlaskThread
@@ -7,12 +8,13 @@ from src.helpers import videoLocalLoader
 from src.helpers.googleDriveIntegrator import upload_videos_to_google_drive
 from configHelper import get_ini_config
 from flask import current_app
+from src.helpers import db
 
 TIME_PATTERN = '%d_%m_%Y__%H_%M_%S'
 
 def __get_frames_to_store(video_capture, camera):
     
-    RECORDING_TIME_IN_SECONDS = 60
+    RECORDING_TIME_IN_SECONDS = 1800
     fourcc = cv2.VideoWriter_fourcc(*'avc1')
 
     frame_width = int(video_capture.get(3))
@@ -37,9 +39,10 @@ def __get_frames_to_store(video_capture, camera):
                     video_writter.write(frame)
                 else:
                     video_writter.release()
-                    service_acc_parameters = (file_location, file_name)
-                    CustomFlaskThread(name='camera_upload_' + camera['mac_address'], target=upload_videos_to_google_drive, args=(service_acc_parameters,)).start()
-                    __get_frames_to_store(video_capture, camera)
+                    CustomFlaskThread(name='camera_upload_' + camera['mac_address'], 
+                        target=upload_videos_to_google_drive, 
+                        args=((file_location, file_name),)).start()
+                    __store_new_video_from_current_camera(video_capture, camera)
             except Exception as e:
                 current_app.logger.error('Error getting frames to store >> %s' % (camera['mac_address']))
                 break    
@@ -50,6 +53,11 @@ def __get_frames_to_store(video_capture, camera):
     video_writter.release()
     CustomFlaskThread(name='store_cameras', target=store_cameras).start()
 
+def __store_new_video_from_current_camera(video_capture, camera):
+    refreshed_camera = db.get_camera_by_filter({'is_enabled': True, '_id': camera['_id']})
+    if refreshed_camera:
+        __get_frames_to_store(video_capture, camera)
+
 def __store_cameras_thread(camera_tuple):
     camera_ip = camera_tuple[0]
     camera = camera_tuple[1]
@@ -58,7 +66,7 @@ def __store_cameras_thread(camera_tuple):
     __get_frames_to_store(video_capture, camera)
 
 def store_cameras():
-    camera_ips_map = videoLocalLoader.load_cameras({'is_enabled':True}, {'_id':0})
+    camera_ips_map = videoLocalLoader.load_cameras({'is_enabled':True}, {})
     
     for camera_ip in camera_ips_map:
         ip = camera_ip[0]

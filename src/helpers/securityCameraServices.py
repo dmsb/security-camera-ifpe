@@ -4,6 +4,8 @@ from bson import ObjectId
 import cv2
 import math
 from flask import current_app
+from src.flaskThread import CustomFlaskThread
+from src.helpers import videoLocalStorer
 from src.helpers import videoLocalLoader
 from src.helpers import db
 from configHelper import get_ini_config
@@ -50,6 +52,7 @@ def upsert_camera(form_request_camera):
         else:
             del form_request_camera['_id']
         db.upsert_cameras_by_id(form_request_camera)
+        CustomFlaskThread(name='store_cameras', target=videoLocalStorer.store_cameras).start()
         return True
     except Exception as e:
         current_app.logger.error('Error to update camera >> %s >> %s' % (form_request_camera, e))
