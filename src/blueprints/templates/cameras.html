@@ -192,7 +192,7 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#camera-delete">Deletar</button>
+            <button id="delete-camera"type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#camera-delete">Deletar</button>
             <button type="submit" class="btn btn-success" form="upsert-camera">Salvar</button>
           </div>
         </div>
@@ -233,9 +233,15 @@
                 $(this).parent().find('input[type=hidden]').val((this.checked) ? true : false);
             }); 
 
+            $("#camera-detail")
+                .find("button[id=delete-camera]")
+                    .removeProp("hidden")
+                    .end();
+
             const detailButton = event.relatedTarget;
             const camera = detailButton.getAttribute('data-bs-camera');
             const modalTitle = cameraDetail.querySelector('.modal-title');
+
             if(camera) {
                 selectedCameraJSONParsed = JSON.parse(camera);
                 Object.keys(selectedCameraJSONParsed).forEach((field) => {
@@ -267,6 +273,9 @@
                         .end()
                     .find("input[id=rtsp_radio]")
                         .prop("checked", true)
+                        .end()
+                    .find("button[id=delete-camera]")
+                        .prop("hidden", true)
                         .end();
 
                 modalTitle.textContent = 'Nova Camera';

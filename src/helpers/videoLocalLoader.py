@@ -1,9 +1,8 @@
-
-import subprocess
 import re
 import cv2
 from flask import current_app
 from src.helpers import db
+import nmap
 
 IP_VALIDATOR_REGEX  = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$"
 
@@ -32,17 +31,20 @@ def build_video_capture(camera, ip):
 def load_cameras(filter, query_fields):
 
     cameras = db.get_cameras_by_filter(filter, query_fields)
-        
-    addresses = subprocess.check_output(['arp', '-a'])
-    network_adds = addresses.decode('windows-1252').splitlines()
+
+    scanner = nmap.PortScanner()
+    scanner.scan(hosts='192.168.15.10-25', arguments='-sP')
+    network_ips = scanner.all_hosts()
     cameras_map = []
 
     for camera in cameras:
+        mac_adrress_camera = camera['mac_address'].upper()
         network_ip = None
-        for network_map_item in network_adds:
-            if len(network_map_item) > 0 and network_map_item.split()[1] == camera['mac_address']:
-                network_ip = network_map_item.split()[0]
+        for network_map_item in network_ips:
+            current_address = scanner[network_map_item]['addresses']
+            if  'mac' in current_address and current_address['mac'] == mac_adrress_camera:
+                network_ip = scanner[network_map_item]['addresses']['ipv4']
+                cameras_map.append((network_ip, camera))
                 break
-        cameras_map.append((network_ip, camera))
 
     return cameras_map
