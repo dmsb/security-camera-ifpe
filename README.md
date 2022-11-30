@@ -1,9 +1,9 @@
 # Olá, me chamo Diogo Muniz! 
 
-##O projeto security-camera-ifpe tem como objetivo ser um sistema web capaz de centralizar o monitoramento por câmeras IP de um estabelecimento
+## O projeto security-camera-ifpe tem como objetivo ser um sistema web capaz de centralizar o monitoramento por câmeras IP de um estabelecimento
 através de uma mesma rede wi-fi.
 
-###Este documento vem a descrever como realizar as configurações básicas no servidor para a execução do código.
+### Este documento vem a descrever como realizar as configurações básicas no servidor para a execução do código.
 
 Etapas necessárias:<br />
 
